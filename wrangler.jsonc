@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "resqr",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "resqr" }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "resqr",
+      "database_id": "4646b405-250a-43e5-acc8-1286c79babd8",
+      "preview_database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "resqr-media" }],
+  "observability": { "enabled": true },
+  "vars": { "APP_ENV": "production", "QR_BASE_URL": "https://resqr.thesyntaxorbit.com" },
+  "routes": [{ "pattern": "resqr.thesyntaxorbit.com", "custom_domain": true }]
+}

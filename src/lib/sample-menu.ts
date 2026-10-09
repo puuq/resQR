@@ -1,0 +1,58 @@
+export const sampleMenu = [
+  {
+    name: 'Flat white',
+    category: 'Coffee & tea',
+    description: 'A double shot of espresso with silky steamed milk.',
+    price: 24000,
+    vegetarian: 1,
+  },
+  {
+    name: 'Iced americano',
+    category: 'Coffee & tea',
+    description: 'Our house espresso, chilled over ice.',
+    price: 20000,
+    vegetarian: 1,
+  },
+  {
+    name: 'Masala chiya',
+    category: 'Coffee & tea',
+    description: 'Slow-brewed milk tea with warming spices.',
+    price: 12000,
+    vegetarian: 1,
+  },
+  {
+    name: 'Veg momo',
+    category: 'From the kitchen',
+    description: 'Ten handmade dumplings with house tomato achar.',
+    price: 26000,
+    vegetarian: 1,
+  },
+  {
+    name: 'Chicken momo',
+    category: 'From the kitchen',
+    description: 'Steamed chicken dumplings with a little heat on the side.',
+    price: 32000,
+    vegetarian: 0,
+  },
+  {
+    name: 'Grilled cheese toastie',
+    category: 'From the kitchen',
+    description: 'Golden toasted bread, melted cheese and fresh tomato.',
+    price: 34000,
+    vegetarian: 1,
+  },
+  {
+    name: 'Chocolate brownie',
+    category: 'Something sweet',
+    description: 'Rich chocolate, a soft centre and a crisp top.',
+    price: 22000,
+    vegetarian: 1,
+  },
+  {
+    name: 'Lemon iced tea',
+    category: 'Cold & refreshing',
+    description: 'Black tea, fresh lemon and just enough sweetness.',
+    price: 18000,
+    vegetarian: 1,
+  },
+];
