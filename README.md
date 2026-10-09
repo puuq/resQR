@@ -55,7 +55,11 @@ The deploy script applies pending D1 migrations and publishes the already-built 
 
 Open `/setup` on the deployed domain, supply the token, and choose the platform account. Remove the bootstrap runtime secret after setup using `wrangler secret delete BOOTSTRAP_TOKEN`; existing users continue to work.
 
-## Deploy on GitHub pushes
+## Deployment workflow
+
+The pilot currently uses manual deployment, as requested. GitHub runs validation on pushes; it does not publish production. To publish an update, run `npm run build:cloudflare` followed by `npm run deploy` while authenticated to Cloudflare.
+
+### Optional deployment on GitHub pushes
 
 Connect `puuq/resQR` to the existing `resqr` Worker in Cloudflare **Workers & Pages → resqr → Settings → Builds**:
 

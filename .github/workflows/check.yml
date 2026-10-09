@@ -21,22 +21,23 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Run integration tests
         run: |
-          npm run dev > /tmp/resqr-dev.log 2>&1 &
+          setsid npm run dev > /tmp/resqr-dev.log 2>&1 &
           DEV_PID=$!
-          trap 'kill "$DEV_PID" 2>/dev/null || true' EXIT
+          trap 'kill -- "-$DEV_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 60); do
             if curl -fsS http://localhost:3000/login > /dev/null; then break; fi
             sleep 2
           done
-          npm test
+          npm test || { cat /tmp/resqr-dev.log; exit 1; }
       - run: npm run build:cloudflare
       - name: Test the built Cloudflare Worker
         run: |
-          npm run preview -- --port 3000 > /tmp/resqr-worker.log 2>&1 &
+          setsid npm run preview -- --port 3000 > /tmp/resqr-worker.log 2>&1 &
           WORKER_PID=$!
-          trap 'kill "$WORKER_PID" 2>/dev/null || true' EXIT
+          trap 'kill -- "-$WORKER_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 60); do
             if curl -fsS http://localhost:3000/api/auth > /dev/null; then break; fi
             sleep 2
           done
-          npm test
+          npm test || { cat /tmp/resqr-worker.log; exit 1; }
+          cat /tmp/resqr-worker.log
