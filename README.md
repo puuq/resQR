@@ -22,7 +22,7 @@ npm run dev
 
 Open `http://localhost:3000/setup`. Use the generated token in `.local/setup-token.txt` and choose your administrator email and password. Setup is allowed once. `.dev.vars`, `.local`, database files, sessions and uploads are ignored by Git.
 
-The development token and database are separate from production. `preview_database_id` keeps the local database isolated. A database migration changes the schema; redeploying the app does not replace restaurant data.
+The development token and database are separate from production. Wrangler's local database lives in `.wrangler/state`; only commands with `--remote` change Cloudflare data. A database migration changes the schema; redeploying the app does not replace restaurant data.
 
 `npm test` runs a browser/API integration scenario against localhost:3000. It creates local-only sample restaurants and tests authentication, cross-restaurant denial, concurrent duplicate taps, cooldown, staff acknowledgement/completion, the customer mobile layout and QR printing. If you already chose local admin credentials, put them in the ignored `.local/pilot-credentials.json` as `{ "email": "...", "password": "..." }` before running tests. Repeated runs add sample restaurants. Never point this test at production.
 
@@ -34,6 +34,8 @@ npm run preview
 ```
 
 Development uses Webpack, matching the production build. This avoids a Turbopack reload loop observed with the local Cloudflare bindings on Windows. OpenNext may require permission to create symlinks during Windows builds. CI uses Linux.
+
+Next.js is pinned to 16.3.8, matching the [OpenNext Cloudflare template](https://github.com/opennextjs/opennextjs-cloudflare/blob/main/create-cloudflare/next/package.json). A production request with 16.4.0 failed when the adapter tried to load `preview-props.json`; verify a Workers preview before updating Next.js.
 
 ## Deploy to Cloudflare
 
