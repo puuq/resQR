@@ -2,6 +2,10 @@
 
 A Next.js pilot for Nepal's cafés: branded menus, table-specific waiter calls, a staff queue, and a private restaurant setup dashboard. Customers do not need accounts or an app.
 
+The public homepage explains the platform and lets restaurant owners request setup. Sign in at `/login` (also linked quietly in the footer). Platform administrators can open **Setup requests** in the dashboard to see contact details and mark a request as contacted. These details are private to the platform administrator; restaurant accounts cannot access them. No automatic email notifications are sent, so check the inbox and contact owners directly.
+
+The setup form validates contact details, preserves inputs on failure and confirms success only after the server accepts the request. A honeypot and a limit of five submissions per IP per hour reduce spam. Requests are stored in D1 with the `0002_setup_inquiries.sql` migration.
+
 ## Stack
 
 - Next.js App Router, React and TypeScript; standard Next.js runtime.
@@ -24,7 +28,7 @@ Open `http://localhost:3000/setup`. Use the generated token in `.local/setup-tok
 
 The development token and database are separate from production. Wrangler's local database lives in `.wrangler/state`; only commands with `--remote` change Cloudflare data. A database migration changes the schema; redeploying the app does not replace restaurant data.
 
-`npm test` runs a browser/API integration scenario against localhost:3000. It creates local-only sample restaurants and tests authentication, cross-restaurant denial, concurrent duplicate taps, cooldown, staff acknowledgement/completion, the customer mobile layout and QR printing. If you already chose local admin credentials, put them in the ignored `.local/pilot-credentials.json` as `{ "email": "...", "password": "..." }` before running tests. Repeated runs add sample restaurants. Never point this test at production.
+`npm test` runs a browser/API integration scenario against localhost:3000. It creates local-only sample restaurants and tests authentication, cross-restaurant denial, concurrent duplicate taps, cooldown, staff acknowledgement/completion, the customer mobile layout and QR printing. It also checks the public homepage at phone widths, setup-form failure/success, inquiry persistence, admin inbox updates, access denial and spam controls. If you already chose local admin credentials, put them in the ignored `.local/pilot-credentials.json` as `{ "email": "...", "password": "..." }` before running tests. Repeated runs add sample restaurants and setup requests. Never point this test at production.
 
 ```sh
 npm run typecheck

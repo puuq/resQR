@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Coffee,
   LayoutGrid,
+  Inbox,
   LogOut,
   Menu,
   Palette,
@@ -27,6 +28,7 @@ import { ErrorBox, Loading, Logo, Modal } from './ui';
 import { RestaurantForm } from './restaurant-form';
 import { MenuEditor, StaffEditor, TableEditor } from './workspace-editors';
 import { ServiceQueue } from './service-queue';
+import { InquiryInbox } from './inquiry-inbox';
 
 type Tab = 'calls' | 'menu' | 'tables' | 'team' | 'settings';
 export function Dashboard({ user }: { user: User }) {
@@ -39,6 +41,7 @@ export function Dashboard({ user }: { user: User }) {
   const [create, setCreate] = useState(false);
   const [search, setSearch] = useState('');
   const [mobile, setMobile] = useState(false);
+  const [platformView, setPlatformView] = useState<'restaurants' | 'inquiries'>('restaurants');
   const loadList = useCallback(async () => {
     try {
       setRestaurants(
@@ -91,6 +94,7 @@ export function Dashboard({ user }: { user: User }) {
     settings: ['Make it feel like your place.', 'Your colours, your logo, your personality.'],
   };
   const choose = (rid: string) => {
+    setPlatformView('restaurants');
     setSelected(rid);
     setTab('calls');
     setMobile(false);
@@ -117,9 +121,10 @@ export function Dashboard({ user }: { user: User }) {
         </div>
         {user.role === 'platform' && (
           <button
-            className={`nav-item ${!selected ? 'active' : ''}`}
+            className={`nav-item ${!selected && platformView === 'restaurants' ? 'active' : ''}`}
             onClick={() => {
               setSelected(null);
+              setPlatformView('restaurants');
               setWorkspace(null);
               setMobile(false);
               void loadList();
@@ -127,6 +132,19 @@ export function Dashboard({ user }: { user: User }) {
           >
             <LayoutGrid size={19} />
             Restaurants<span className="nav-count">{restaurants.length}</span>
+          </button>
+        )}
+        {user.role === 'platform' && (
+          <button
+            className={`nav-item ${platformView === 'inquiries' ? 'active' : ''}`}
+            onClick={() => {
+              setSelected(null);
+              setWorkspace(null);
+              setPlatformView('inquiries');
+              setMobile(false);
+            }}
+          >
+            <Inbox size={19} /> Setup requests
           </button>
         )}
         {selected && (
@@ -215,7 +233,13 @@ export function Dashboard({ user }: { user: User }) {
             </button>
             <span>Workspace</span>
             <ChevronRight size={14} />
-            <strong>{selected ? workspace?.restaurant.name || 'Restaurant' : 'Restaurants'}</strong>
+            <strong>
+              {selected
+                ? workspace?.restaurant.name || 'Restaurant'
+                : platformView === 'inquiries'
+                  ? 'Setup requests'
+                  : 'Restaurants'}
+            </strong>
             {selected && (
               <>
                 <ChevronRight size={14} />
@@ -229,7 +253,9 @@ export function Dashboard({ user }: { user: User }) {
         </header>
         <main className="main-content">
           <ErrorBox message={error} />
-          {!selected ? (
+          {user.role === 'platform' && platformView === 'inquiries' ? (
+            <InquiryInbox />
+          ) : !selected ? (
             <>
               <div className="page-heading">
                 <div>

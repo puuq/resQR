@@ -71,6 +71,57 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
     ).status(),
   ).toBe(403);
   const guest = await playwright.request.newContext({ baseURL: 'http://localhost:3000' });
+  expect((await guest.get('/api/inquiries')).status()).toBe(401);
+  expect(
+    (await guest.patch('/api/inquiries', { data: { id: 1, status: 'contacted' } })).status(),
+  ).toBe(401);
+  expect((await waiter.get('/api/inquiries')).status()).toBe(403);
+  expect(
+    (await waiter.patch('/api/inquiries', { data: { id: 1, status: 'contacted' } })).status(),
+  ).toBe(403);
+  const inquiry = {
+    name: 'Pilot owner',
+    restaurant: `Homepage café ${suffix}`,
+    location: 'Lalitpur',
+    phone: '+977 9800000000',
+    email: 'owner@example.com',
+    message: 'Please help with six tables.',
+  };
+  expect(
+    (await guest.post('/api/inquiries', { data: { ...inquiry, phone: 'not-a-phone' } })).status(),
+  ).toBe(400);
+  expect(
+    (
+      await guest.post('/api/inquiries', {
+        headers: { Origin: 'https://evil.example' },
+        data: inquiry,
+      })
+    ).status(),
+  ).toBe(403);
+  // Honeypot submissions do not save contact details; the public endpoint is rate limited.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    expect(
+      (
+        await guest.post('/api/inquiries', {
+          headers: { 'cf-connecting-ip': `bot-${suffix}` },
+          data: { ...inquiry, website: 'bot.example' },
+        })
+      ).status(),
+    ).toBe(201);
+  }
+  expect(
+    (
+      await guest.post('/api/inquiries', {
+        headers: { 'cf-connecting-ip': `bot-${suffix}` },
+        data: { ...inquiry, website: 'bot.example' },
+      })
+    ).status(),
+  ).toBe(429);
+  expect(
+    (await (await admin.get('/api/inquiries')).json()).inquiries.some(
+      (item: { restaurant: string }) => item.restaurant === inquiry.restaurant,
+    ),
+  ).toBeFalsy();
   expect((await guest.get('/api/restaurants')).status()).toBe(401);
   expect((await guest.get('/api/public?table=invalid')).status()).toBe(404);
   const publicData = await (await guest.get(`/api/public?table=${w.tables[0].token}`)).json();
@@ -232,6 +283,59 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
     viewport: { width: 1440, height: 1000 },
   });
   const adminPage = await adminContext.newPage();
+  // The public page stays a homepage, including for signed-in administrators.
+  await adminPage.goto('/');
+  await expect(adminPage.getByRole('heading', { level: 1 })).toContainText('Good service.');
+  await page.setExtraHTTPHeaders({ 'cf-connecting-ip': `lead-${suffix}` });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/');
+  await expect(page).toHaveURL('http://localhost:3000/');
+  await expect(page.locator('input[type="password"]')).toHaveCount(0);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'index, follow');
+  await page.screenshot({ path: '.local/home-desktop.png', fullPage: true });
+  for (const width of [390, 375, 320, 820]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBeTruthy();
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: '.local/home-mobile.png', fullPage: true });
+  await page.getByRole('link', { name: 'Bring resQR to your place' }).click();
+  await page.getByLabel('Your name', { exact: true }).fill(inquiry.name);
+  await page.getByLabel('Restaurant / café name', { exact: true }).fill(inquiry.restaurant);
+  await page.getByLabel('City or area', { exact: true }).fill(inquiry.location);
+  await page.getByLabel('Phone number', { exact: true }).fill(inquiry.phone);
+  await page.getByLabel('Email (optional)').fill(inquiry.email);
+  await page.getByLabel('Anything you’d like us to know?').fill(inquiry.message);
+  await page.route(
+    '**/api/inquiries',
+    (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Please try again.' }),
+      }),
+    { times: 1 },
+  );
+  await page.getByRole('button', { name: 'Let’s get your place connected' }).click();
+  await expect(
+    page.getByRole('form', { name: 'Restaurant setup request' }).getByRole('alert'),
+  ).toHaveText('Please try again.');
+  await expect(page.getByLabel('Your name', { exact: true })).toHaveValue(inquiry.name);
+  await expect(page.getByText('You’re on our list.')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Let’s get your place connected' }).click();
+  await expect(page.getByText('You’re on our list.')).toBeVisible();
+  await expect(page.getByRole('status')).toBeFocused();
+  const saved = (await (await admin.get('/api/inquiries')).json()).inquiries.find(
+    (item: { restaurant: string }) => item.restaurant === inquiry.restaurant,
+  );
+  expect(saved).toMatchObject({ ...inquiry, status: 'new' });
+  expect(
+    (
+      await waiter.patch('/api/inquiries', { data: { id: saved.id, status: 'contacted' } })
+    ).status(),
+  ).toBe(403);
   await adminPage.goto('/dashboard');
   await expect(adminPage.getByRole('heading', { name: 'Your restaurants.' })).toBeVisible();
   await expect(adminPage.locator('.restaurant-card').first()).toBeVisible();
@@ -240,6 +344,19 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await adminPage.getByLabel('Restaurant name', { exact: true }).fill('Little Fern');
   await expect(adminPage.getByLabel('Menu URL name')).toHaveValue('little-fern');
   await adminPage.getByRole('button', { name: 'Close dialog' }).click();
+  await adminPage.getByRole('button', { name: 'Setup requests', exact: true }).click();
+  const inquiryCard = adminPage
+    .locator('.inquiry-card')
+    .filter({ has: adminPage.getByRole('heading', { name: inquiry.restaurant, exact: true }) });
+  await expect(inquiryCard).toContainText(inquiry.message);
+  await inquiryCard.getByRole('button', { name: 'Mark contacted', exact: true }).click();
+  await expect(inquiryCard.getByText('Contacted', { exact: true })).toBeVisible();
+  expect(
+    (await (await admin.get('/api/inquiries')).json()).inquiries.find(
+      (item: { id: number }) => item.id === saved.id,
+    ).status,
+  ).toBe('contacted');
+  await adminPage.screenshot({ path: '.local/setup-inbox.png', fullPage: true });
   await adminPage.goto(`/print?restaurant=${rid}`);
   await expect(adminPage.getByRole('button', { name: 'Print / Save PDF' })).toBeVisible();
   expect(await adminPage.locator('.print-qr').count()).toBe(12);
