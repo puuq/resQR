@@ -65,7 +65,7 @@ Connect `puuq/resQR` to the existing `resqr` Worker in Cloudflare **Workers & Pa
 - Deploy command: `npm run deploy`
 - Grant the build credential permission to update this Worker and apply migrations to the resQR D1 database.
 
-The repository's GitHub workflow runs type checks, local integration tests, and a Cloudflare build. Cloudflare Builds performs deployment separately; configure branch protection if you want merges to require the checks. Do not point branch preview bindings or migration commands at production data. A test environment needs its own Worker, D1, R2 and secrets.
+The repository's GitHub workflow runs type checks, integration tests in both the Next.js development server and the built Cloudflare Worker, and a Cloudflare build. Cloudflare Builds performs deployment separately; configure branch protection if you want merges to require the checks. Do not point branch preview bindings or migration commands at production data. A test environment needs its own Worker, D1, R2 and secrets.
 
 ## Demonstrate at a café
 
