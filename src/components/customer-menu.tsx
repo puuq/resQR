@@ -1,18 +1,10 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ArrowUpRight,
-  BellRing,
-  Check,
-  CheckCheck,
-  Coffee,
-  Leaf,
-  Search,
-  UtensilsCrossed,
-} from 'lucide-react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { BellRing, Check, CheckCheck, Coffee, Leaf, Search, UtensilsCrossed } from 'lucide-react';
 import { api, brandStyle, money } from '@/lib/client';
 import type { PublicMenu, ServiceRequest } from '@/lib/types';
 import { ErrorBox, Loading } from './ui';
+import { MenuAdvertisement, MenuPromotions } from './menu-promotions';
 export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?: string }) {
   const [data, setData] = useState<PublicMenu | null>(null);
   const [error, setError] = useState('');
@@ -21,7 +13,6 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
   const [busy, setBusy] = useState(false);
   const [category, setCategory] = useState('All');
   const [search, setSearch] = useState('');
-  const [adFailed, setAdFailed] = useState(false);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -130,6 +121,7 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
             <h1>Menu</h1>
             <span>{data.menu.length} items</span>
           </div>
+          <MenuPromotions />
           <label className="search-field customer-search">
             <Search size={18} />
             <input
@@ -150,25 +142,6 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
               </button>
             ))}
           </nav>
-          {r.ad_image && !adFailed && (
-            <aside className="sponsor-card">
-              <img
-                src={r.ad_image}
-                alt={r.ad_title || 'Sponsor advertisement'}
-                onError={() => setAdFailed(true)}
-              />
-              <div>
-                <span className="sponsored-label">SPONSORED</span>
-                <strong>{r.ad_title || 'A little local discovery'}</strong>
-                {r.ad_url && (
-                  <a href={r.ad_url} target="_blank" rel="sponsored noopener noreferrer">
-                    Discover more
-                    <ArrowUpRight size={13} />
-                  </a>
-                )}
-              </div>
-            </aside>
-          )}
           {!items.length ? (
             <div className="empty-panel">
               <UtensilsCrossed size={30} />
@@ -181,35 +154,36 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
             </div>
           ) : (
             <div className="customer-items">
-              {items.map((item) => (
-                <article
-                  key={item.id}
-                  className={`customer-item ${!item.available ? 'sold-out' : ''}`}
-                >
-                  <div className="customer-item-body">
-                    <div className="dish-category">
-                      {item.category}
-                      {!!item.vegetarian && (
-                        <span title="Vegetarian">
-                          <Leaf size={12} />
-                          Veg
-                        </span>
-                      )}
+              {items.map((item, index) => (
+                <Fragment key={item.id}>
+                  <article className={`customer-item ${!item.available ? 'sold-out' : ''}`}>
+                    <div className="customer-item-body">
+                      <div className="dish-category">
+                        {item.category}
+                        {!!item.vegetarian && (
+                          <span title="Vegetarian">
+                            <Leaf size={12} />
+                            Veg
+                          </span>
+                        )}
+                      </div>
+                      <h3>{item.name}</h3>
+                      {item.description && <p>{item.description}</p>}
+                      <div className="dish-bottom">
+                        <strong>{money(item.price)}</strong>
+                        {!item.available && <span className="sold-out-label">Sold out today</span>}
+                      </div>
                     </div>
-                    <h3>{item.name}</h3>
-                    {item.description && <p>{item.description}</p>}
-                    <div className="dish-bottom">
-                      <strong>{money(item.price)}</strong>
-                      {!item.available && <span className="sold-out-label">Sold out today</span>}
-                    </div>
-                  </div>
-                  {item.image && (
-                    <img className="dish-image" src={item.image} alt={item.name} loading="lazy" />
-                  )}
-                </article>
+                    {item.image && (
+                      <img className="dish-image" src={item.image} alt={item.name} loading="lazy" />
+                    )}
+                  </article>
+                  {index === Math.min(4, items.length) - 1 && <MenuAdvertisement restaurant={r} />}
+                </Fragment>
               ))}
             </div>
           )}
+          {!items.length && <MenuAdvertisement restaurant={r} />}
           <p className="menu-footnote">
             Please tell your waiter about any allergies or dietary requirements.
             <br />

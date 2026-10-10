@@ -1710,7 +1710,46 @@ form > small {
   gap: 6px;
   white-space: nowrap;
 }
-.sponsor-card {
+.menu-promotions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 10px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.menu-project {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  min-width: 0;
+}
+.menu-project + .menu-project {
+  border-left: 1px solid var(--line);
+}
+.menu-project > svg {
+  flex-shrink: 0;
+}
+.menu-project > svg:last-child {
+  margin-left: auto;
+}
+.menu-project strong {
+  display: block;
+  font-size: 12px;
+}
+.menu-project small {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  margin-top: 2px;
+}
+.menu-advertisement {
+  grid-column: 1 / -1;
+  margin: 8px 0;
+}
+.menu-ad-space {
   display: flex;
   align-items: center;
   gap: 16px;
@@ -1718,32 +1757,32 @@ form > small {
   background: var(--surface);
   border-radius: 10px;
   padding: 12px;
-  margin: 0 0 28px;
-  min-height: 90px;
-  max-height: 120px;
+  min-height: 82px;
   overflow: hidden;
 }
-.sponsor-card > img {
-  width: 108px;
-  height: 74px;
+.menu-ad-space > img {
+  width: 96px;
+  height: 62px;
+  object-fit: contain;
   border-radius: 6px;
   flex-shrink: 0;
 }
-.sponsor-card > div {
+.menu-ad-space > div {
   min-width: 0;
 }
-.sponsored-label {
+.advertisement-label {
   display: block;
-  font-size: 7px;
-  letter-spacing: 1.2px;
+  font-size: 9px;
+  letter-spacing: 0.5px;
   color: var(--muted);
   margin-bottom: 5px;
 }
-.sponsor-card strong {
+.menu-ad-space strong {
   font-size: 12px;
   display: block;
+  overflow-wrap: anywhere;
 }
-.sponsor-card a {
+.menu-ad-space a {
   font-size: 10px;
   display: flex;
   align-items: center;
@@ -1955,7 +1994,7 @@ form > small {
   padding: 20px;
 }
 .dark .dish-bottom strong,
-.dark .sponsor-card a {
+.dark .menu-ad-space a {
   color: #c4d7af;
 }
 .dark .call-dock-icon,

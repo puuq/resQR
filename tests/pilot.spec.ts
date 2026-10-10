@@ -163,14 +163,28 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
     color: '#563d74',
     ad_title: 'Local sponsor',
   });
-  // A sponsor must not push the menu heading out of the top of a phone screen.
+  // Product promotions scroll away; a separate ad slot follows four menu items.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/t/${w.tables[0].token}`);
   const menuHeading = page.getByRole('heading', { name: 'Menu', exact: true, level: 1 });
   await expect(menuHeading).toBeVisible();
-  await expect(page.getByText('SPONSORED', { exact: true })).toBeVisible();
+  const projects = page.getByRole('complementary', { name: 'Our projects' });
+  await expect(projects).toBeInViewport();
+  await expect(projects.getByRole('link', { name: /resQR/ })).toHaveAttribute('href', '/');
+  await expect(projects.getByText('Splitr', { exact: true })).toBeVisible();
+  await expect(projects.getByText('Coming soon', { exact: true })).toBeVisible();
+  const advertisement = page.getByRole('complementary', { name: 'Advertisement', exact: true });
+  await expect(advertisement).toHaveCount(1);
+  await expect(advertisement.getByText('Local sponsor', { exact: true })).toBeVisible();
+  const fourthDish = page.locator('.customer-item').nth(3);
+  expect((await advertisement.boundingBox())!.y).toBeGreaterThan(
+    (await fourthDish.boundingBox())!.y,
+  );
   expect((await menuHeading.boundingBox())!.y).toBeLessThan(150);
   await page.screenshot({ path: '.local/customer-sponsored-mobile.png', fullPage: true });
+  await advertisement.scrollIntoViewIfNeeded();
+  await expect(projects).not.toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Call waiter', exact: true })).toBeInViewport();
   // Restore the light menu for the customer screenshot.
   expect(
     (await admin.patch('/api/restaurants', { data: { ...w.restaurant, id: rid } })).status(),
@@ -235,6 +249,13 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/t/${w.tables[1].token}`);
   await expect(page.getByRole('heading', { name: 'Menu', exact: true, level: 1 })).toBeVisible();
+  const emptyAd = page.getByRole('complementary', { name: 'Advertisement', exact: true });
+  await expect(emptyAd).toHaveCount(1);
+  await expect(emptyAd.locator('img')).toHaveCount(0);
+  await page.getByRole('textbox', { name: 'Search food and drinks' }).fill('no matching dish');
+  await expect(page.getByRole('heading', { name: 'Nothing matches just yet.' })).toBeVisible();
+  await expect(emptyAd).toHaveCount(1);
+  await page.getByRole('textbox', { name: 'Search food and drinks' }).fill('');
   await page.getByRole('button', { name: 'Call waiter' }).click();
   await expect(page.getByText('Request sent', { exact: true })).toBeVisible();
   await expect(

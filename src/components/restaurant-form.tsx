@@ -180,11 +180,11 @@ export function RestaurantForm({
       {initial && canEditAd && (
         <>
           <div className="form-divider">
-            <span>SPONSORED PLACEMENT · OPTIONAL</span>
+            <span>MENU ADVERTISEMENT · OPTIONAL</span>
           </div>
-          <ImageUpload value={adImage} onChange={setAdImage} label="Sponsor image" />
+          <ImageUpload value={adImage} onChange={setAdImage} label="Advertisement image" />
           <label>
-            Sponsor label
+            Advertisement title
             <input
               name="ad_title"
               maxLength={120}
@@ -193,12 +193,12 @@ export function RestaurantForm({
             />
           </label>
           <label>
-            Sponsor destination
+            Advertisement destination
             <input name="ad_url" type="url" defaultValue={initial.ad_url} placeholder="https://…" />
           </label>
           <small>
-            The card only appears when a sponsor image is uploaded. Menu and service work
-            independently.
+            This fills the separate advertisement area within the menu. The resQR and Splitr
+            promotions at the top are independent. Without an image, the ad space stays empty.
           </small>
         </>
       )}
