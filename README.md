@@ -87,6 +87,8 @@ The repository's GitHub workflow runs type checks, integration tests in both the
 
 Admin can manage all restaurants. Owners manage their own menus, branding, tables and staff. Reception can handle all calls at its venue. Waiters claim requests and complete their own claimed requests. Sponsorship is controlled by the platform administrator.
 
+Admin and owners can set an optional **Google review link** in restaurant settings (Google Business Profile → Read reviews → Get more reviews). A compact, nonsticky **Review on Google** button appears beside the customer Menu heading and opens that restaurant's link in a new tab. Leaving the field empty hides it. Google links are validated on the server; the `0003_google_review_link.sql` migration preserves existing restaurants with an empty default. resQR does not collect review ratings or verify whether a customer posted a review.
+
 ## Pilot limits and next steps
 
 - Keep the staff queue open, the device awake and sound enabled. Background/locked-phone notifications and native apps are not implemented. Internet is required; a failed POST never displays a successful send.

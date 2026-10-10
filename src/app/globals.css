@@ -1795,13 +1795,50 @@ form > small {
   align-items: center;
   justify-content: space-between;
   margin: 18px 0;
+  gap: 12px;
 }
 .customer-section-title h1 {
   font-size: 20px;
 }
-.customer-section-title > span {
+.customer-menu-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.customer-menu-label > span {
   font-size: 10px;
   color: var(--muted);
+  white-space: nowrap;
+}
+.google-review-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--brand-soft);
+  border-radius: 9px;
+  color: var(--brand-button);
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.google-review-link:hover {
+  background: var(--brand-soft);
+}
+.google-review-link:focus-visible {
+  outline: 2px solid var(--brand-button);
+  outline-offset: 3px;
+}
+.dark .google-review-link {
+  color: var(--ink);
+  border-color: var(--line);
+}
+.dark .google-review-link:focus-visible {
+  outline-color: var(--ink);
 }
 .customer-search {
   width: 100%;

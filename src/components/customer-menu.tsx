@@ -1,6 +1,16 @@
 'use client';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
-import { BellRing, Check, CheckCheck, Coffee, Leaf, Search, UtensilsCrossed } from 'lucide-react';
+import {
+  ArrowUpRight,
+  BellRing,
+  Check,
+  CheckCheck,
+  Coffee,
+  Leaf,
+  Search,
+  Star,
+  UtensilsCrossed,
+} from 'lucide-react';
 import { api, brandStyle, money } from '@/lib/client';
 import type { PublicMenu, ServiceRequest } from '@/lib/types';
 import { ErrorBox, Loading } from './ui';
@@ -118,8 +128,23 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
         </header>
         <section className="customer-menu-section">
           <div className="customer-section-title">
-            <h1>Menu</h1>
-            <span>{data.menu.length} items</span>
+            <div className="customer-menu-label">
+              <h1>Menu</h1>
+              <span>{data.menu.length} items</span>
+            </div>
+            {r.google_review_url && (
+              <a
+                className="google-review-link"
+                href={r.google_review_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Review ${r.name} on Google (opens in a new tab)`}
+              >
+                <Star size={14} aria-hidden="true" />
+                Review on Google
+                <ArrowUpRight size={13} aria-hidden="true" />
+              </a>
+            )}
           </div>
           <MenuPromotions />
           <label className="search-field customer-search">

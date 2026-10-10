@@ -24,6 +24,26 @@ export const credentials = z.object({
     .transform((s) => s.toLowerCase().trim()),
   password: z.string().min(12, 'Use at least 12 characters for the password.').max(128),
 });
+const googleReviewUrl = z
+  .string()
+  .trim()
+  .max(1000)
+  .refine((s) => {
+    if (!s) return true;
+    try {
+      const url = new URL(s);
+      if (url.protocol !== 'https:' || url.username || url.password || url.port) return false;
+      if (['g.page', 'maps.app.goo.gl'].includes(url.hostname)) return url.pathname !== '/';
+      if (url.hostname === 'search.google.com') return url.pathname === '/local/writereview';
+      if (url.hostname === 'maps.google.com') return true;
+      return (
+        ['google.com', 'www.google.com'].includes(url.hostname) &&
+        (url.pathname === '/maps' || url.pathname.startsWith('/maps/'))
+      );
+    } catch {
+      return false;
+    }
+  }, 'Use the full HTTPS review link from Google Business Profile or Google Maps.');
 export const restaurantInput = z.object({
   name: z.string().trim().min(2).max(100),
   slug: z
@@ -45,6 +65,7 @@ export const restaurantInput = z.object({
   ad_title: z.string().trim().max(120).default(''),
   ad_image: image.default(''),
   ad_url: externalUrl.default(''),
+  google_review_url: googleReviewUrl.default(''),
   table_count: z.number().int().min(1).max(100).default(6),
   sample_menu: z.boolean().default(false),
 });

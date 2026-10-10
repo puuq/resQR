@@ -22,6 +22,7 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   if (setup.status() === 409)
     expect((await admin.post('/api/auth', { data: credentials })).ok()).toBeTruthy();
   const suffix = Date.now().toString(36);
+  const reviewUrl = 'https://g.page/r/juniper-demo/review';
   const first = await admin.post('/api/restaurants', {
     data: {
       name: 'Juniper Coffee House',
@@ -33,6 +34,7 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
       sample_menu: true,
       wifi_ssid: 'Juniper Guest',
       wifi_password: 'a-demo-wifi-password',
+      google_review_url: reviewUrl,
     },
   });
   expect(first.status()).toBe(201);
@@ -127,6 +129,32 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   const publicData = await (await guest.get(`/api/public?table=${w.tables[0].token}`)).json();
   expect(publicData.restaurant.wifi_password).toBeUndefined();
   expect(publicData.restaurant.wifi_ssid).toBeUndefined();
+  expect(publicData.restaurant.google_review_url).toBe(reviewUrl);
+  expect(
+    (await (await guest.get(`/api/public?slug=corner-${suffix}`)).json()).restaurant
+      .google_review_url,
+  ).toBe('');
+  for (const invalidReviewUrl of [
+    'http://g.page/r/juniper/review',
+    'https://g.page.evil.example/r/juniper/review',
+    'https://www.google.com/url?q=https://evil.example',
+    'javascript:alert(1)',
+  ]) {
+    expect(
+      (
+        await admin.patch('/api/restaurants', {
+          data: { ...w.restaurant, google_review_url: invalidReviewUrl },
+        })
+      ).status(),
+    ).toBe(400);
+  }
+  expect(
+    (
+      await waiter.patch('/api/restaurants', {
+        data: { ...w.restaurant, google_review_url: reviewUrl },
+      })
+    ).status(),
+  ).toBe(403);
   // R2 upload and branding round-trip, including centrally managed sponsorship.
   const image = Buffer.from(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aRz8AAAAASUVORK5CYII=',
@@ -162,12 +190,79 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
     theme: 'dark',
     color: '#563d74',
     ad_title: 'Local sponsor',
+    google_review_url: reviewUrl,
   });
+  // Owners can manage their review link, without modifying another venue or platform ads.
+  const ownerCredentials = {
+    email: `owner-${suffix}@resqr.local`,
+    password: randomBytes(20).toString('base64url'),
+  };
+  expect(
+    (
+      await admin.post('/api/staff', {
+        data: { ...ownerCredentials, name: 'Mira', role: 'owner', restaurant_id: rid },
+      })
+    ).status(),
+  ).toBe(201);
+  const owner = await playwright.request.newContext({ baseURL: 'http://localhost:3000' });
+  expect((await owner.post('/api/auth', { data: ownerCredentials })).status()).toBe(200);
+  expect(
+    (
+      await owner.patch('/api/restaurants', {
+        data: { ...branded.restaurant, id: other, slug: `corner-${suffix}` },
+      })
+    ).status(),
+  ).toBe(403);
+  const ownerContext = await browser.newContext({ storageState: await owner.storageState() });
+  const ownerPage = await ownerContext.newPage();
+  await ownerPage.goto('/dashboard');
+  await ownerPage.getByRole('button', { name: 'Brand & settings' }).click();
+  const ownerReviewUrl = 'https://search.google.com/local/writereview?placeid=ChIJTestRestaurant';
+  await ownerPage.getByLabel('Google review link', { exact: true }).fill(ownerReviewUrl);
+  await ownerPage.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(ownerPage.getByText('Saved', { exact: true })).toBeVisible();
+  expect(
+    (await (await guest.get(`/api/public?table=${w.tables[0].token}`)).json()).restaurant,
+  ).toMatchObject({
+    google_review_url: ownerReviewUrl,
+    ad_title: 'Local sponsor',
+    ad_image: imageUrl,
+  });
+  await ownerContext.close();
+  await owner.dispose();
   // Product promotions scroll away; a separate ad slot follows four menu items.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/t/${w.tables[0].token}`);
   const menuHeading = page.getByRole('heading', { name: 'Menu', exact: true, level: 1 });
   await expect(menuHeading).toBeVisible();
+  const reviewLink = page.getByRole('link', {
+    name: 'Review Juniper Coffee House on Google (opens in a new tab)',
+  });
+  await expect(reviewLink).toHaveAttribute('href', ownerReviewUrl);
+  await expect(reviewLink).toHaveAttribute('target', '_blank');
+  await expect(reviewLink).toHaveAttribute('rel', 'noopener noreferrer');
+  await page.context().route(ownerReviewUrl, (route) =>
+    route.fulfill({
+      contentType: 'text/html',
+      body: '<title>Review destination</title>',
+    }),
+  );
+  const reviewPopupPromise = page.waitForEvent('popup');
+  await reviewLink.click();
+  const reviewPopup = await reviewPopupPromise;
+  await expect(reviewPopup).toHaveURL(ownerReviewUrl);
+  await expect(page).toHaveURL(`http://localhost:3000/t/${w.tables[0].token}`);
+  await reviewPopup.close();
+  await page.context().unroute(ownerReviewUrl);
+  for (const width of [320, 390, 1440]) {
+    await page.setViewportSize({ width, height: 844 });
+    await expect(reviewLink).toBeInViewport();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    ).toBeTruthy();
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: '.local/customer-review-dark.png' });
   const projects = page.getByRole('complementary', { name: 'Our projects' });
   await expect(projects).toBeInViewport();
   await expect(projects.getByRole('link', { name: /resQR/ })).toHaveAttribute('href', '/');
@@ -184,10 +279,15 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await page.screenshot({ path: '.local/customer-sponsored-mobile.png', fullPage: true });
   await advertisement.scrollIntoViewIfNeeded();
   await expect(projects).not.toBeInViewport();
+  await expect(reviewLink).not.toBeInViewport();
   await expect(page.getByRole('button', { name: 'Call waiter', exact: true })).toBeInViewport();
   // Restore the light menu for the customer screenshot.
   expect(
-    (await admin.patch('/api/restaurants', { data: { ...w.restaurant, id: rid } })).status(),
+    (
+      await admin.patch('/api/restaurants', {
+        data: { ...w.restaurant, id: rid, google_review_url: '' },
+      })
+    ).status(),
   ).toBe(200);
   const spoof = await guest.post('/api/calls', {
     headers: { Origin: 'https://evil.example' },
@@ -249,6 +349,7 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/t/${w.tables[1].token}`);
   await expect(page.getByRole('heading', { name: 'Menu', exact: true, level: 1 })).toBeVisible();
+  await expect(reviewLink).toHaveCount(0);
   const emptyAd = page.getByRole('complementary', { name: 'Advertisement', exact: true });
   await expect(emptyAd).toHaveCount(1);
   await expect(emptyAd.locator('img')).toHaveCount(0);

@@ -20,6 +20,7 @@ export interface Restaurant {
   ad_title: string;
   ad_image: string;
   ad_url: string;
+  google_review_url: string;
   created_at: number;
 }
 export interface MenuItem {

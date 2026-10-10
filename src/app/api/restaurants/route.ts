@@ -27,7 +27,7 @@ export const POST = handler(async (request) => {
   const statements = [
     db
       .prepare(
-        `INSERT INTO restaurants(id,name,slug,tagline,address,color,theme,logo,wifi_ssid,wifi_password,ad_title,ad_image,ad_url,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+        `INSERT INTO restaurants(id,name,slug,tagline,address,color,theme,logo,wifi_ssid,wifi_password,ad_title,ad_image,ad_url,google_review_url,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       )
       .bind(
         restaurantId,
@@ -43,6 +43,7 @@ export const POST = handler(async (request) => {
         data.ad_title,
         data.ad_image,
         data.ad_url,
+        data.google_review_url,
         now,
       ),
   ];
@@ -85,11 +86,13 @@ export const PATCH = handler(async (request) => {
   const db = await database();
   // Sponsorship is managed centrally; restaurant owners cannot replace platform ads.
   const previous = await db
-    .prepare('SELECT ad_title,ad_image,ad_url FROM restaurants WHERE id=?')
+    .prepare('SELECT ad_title,ad_image,ad_url,google_review_url FROM restaurants WHERE id=?')
     .bind(raw.id)
-    .first<{ ad_title: string; ad_image: string; ad_url: string }>();
+    .first<{ ad_title: string; ad_image: string; ad_url: string; google_review_url: string }>();
   if (!previous) throw new ApiError(404, 'Restaurant not found.');
   const ad = user.role === 'platform' ? data : previous;
+  const reviewUrl =
+    raw.google_review_url === undefined ? previous.google_review_url : data.google_review_url;
   if (
     await db
       .prepare('SELECT id FROM restaurants WHERE slug=? AND id!=?')
@@ -99,7 +102,7 @@ export const PATCH = handler(async (request) => {
     throw new ApiError(409, 'This URL is already in use.');
   await db
     .prepare(
-      `UPDATE restaurants SET name=?,slug=?,tagline=?,address=?,color=?,theme=?,logo=?,wifi_ssid=?,wifi_password=?,ad_title=?,ad_image=?,ad_url=? WHERE id=?`,
+      `UPDATE restaurants SET name=?,slug=?,tagline=?,address=?,color=?,theme=?,logo=?,wifi_ssid=?,wifi_password=?,ad_title=?,ad_image=?,ad_url=?,google_review_url=? WHERE id=?`,
     )
     .bind(
       data.name,
@@ -114,6 +117,7 @@ export const PATCH = handler(async (request) => {
       ad.ad_title,
       ad.ad_image,
       ad.ad_url,
+      reviewUrl,
       raw.id,
     )
     .run();

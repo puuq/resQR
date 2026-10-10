@@ -177,6 +177,23 @@ export function RestaurantForm({
         </label>
       </div>
       <small>Use a guest network. These details appear on your printable Wi-Fi QR cards.</small>
+      <div className="form-divider">
+        <span>GOOGLE REVIEWS · OPTIONAL</span>
+      </div>
+      <label>
+        Google review link
+        <input
+          name="google_review_url"
+          type="url"
+          maxLength={1000}
+          defaultValue={initial?.google_review_url}
+          placeholder="https://g.page/r/…/review"
+        />
+      </label>
+      <small>
+        Copy your link from Google Business Profile → Read reviews → Get more reviews.
+        Customers can open it from the Menu heading. Leave empty to hide the button.
+      </small>
       {initial && canEditAd && (
         <>
           <div className="form-divider">
