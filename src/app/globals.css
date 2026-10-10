@@ -1710,64 +1710,6 @@ form > small {
   gap: 6px;
   white-space: nowrap;
 }
-.menu-hero {
-  padding: 41px 0 32px;
-  position: relative;
-  overflow: hidden;
-}
-.menu-hero h1 {
-  font-size: 49px;
-  font-weight: 600;
-  letter-spacing: -2px;
-  line-height: 1.15;
-  position: relative;
-  z-index: 1;
-}
-.menu-hero h1 em {
-  font-family: Georgia, serif;
-  font-weight: 400;
-  color: var(--brand-button);
-}
-.menu-hero > p {
-  font-size: 13px;
-  color: var(--muted);
-  margin-top: 17px;
-  max-width: 70%;
-  position: relative;
-  z-index: 1;
-}
-.menu-hero .eyebrow {
-  font-size: 8px;
-  letter-spacing: 1.7px;
-}
-.location {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  font-size: 10px;
-  color: var(--muted);
-  margin-top: 13px;
-}
-.menu-hero-art {
-  position: absolute;
-  right: 18px;
-  top: 41px;
-  transform: rotate(-14deg);
-  background: var(--brand-soft);
-  width: 170px;
-  height: 170px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--brand-button);
-}
-.hero-ring {
-  position: absolute;
-  inset: -14px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-}
 .sponsor-card {
   display: flex;
   align-items: center;
@@ -1815,7 +1757,7 @@ form > small {
   justify-content: space-between;
   margin: 18px 0;
 }
-.customer-section-title h2 {
+.customer-section-title h1 {
   font-size: 20px;
 }
 .customer-section-title > span {
@@ -2012,7 +1954,6 @@ form > small {
   text-align: center;
   padding: 20px;
 }
-.dark .menu-hero h1 em,
 .dark .dish-bottom strong,
 .dark .sponsor-card a {
   color: #c4d7af;
@@ -2020,10 +1961,6 @@ form > small {
 .dark .call-dock-icon,
 .dark .customer-logo {
   color: #c4d7af;
-}
-.dark .menu-hero-art {
-  color: #b4c9a1;
-  background: #344731;
 }
 .dark .eyebrow {
   color: #b4c9a1;
@@ -2380,18 +2317,6 @@ form > small {
   .customer-items {
     grid-template-columns: 1fr;
   }
-  .menu-hero-art {
-    width: 145px;
-    height: 145px;
-    right: 5px;
-    top: 58px;
-  }
-  .menu-hero-art > svg {
-    width: 80px;
-  }
-  .menu-hero h1 {
-    font-size: 43px;
-  }
   .customer-top {
     padding: 22px 0;
   }
@@ -2607,30 +2532,7 @@ form > small {
     font-size: 9px;
     padding: 7px 10px;
   }
-  .menu-hero {
-    padding-top: 32px;
-  }
-  .menu-hero h1 {
-    font-size: 39px;
-  }
-  .menu-hero-art {
-    width: 115px;
-    height: 115px;
-    top: 55px;
-    right: -15px;
-    opacity: 0.7;
-  }
-  .menu-hero-art > svg {
-    width: 68px;
-  }
-  .menu-hero > p {
-    font-size: 12px;
-    max-width: 78%;
-  }
-  .menu-hero .eyebrow {
-    font-size: 7px;
-  }
-  .customer-section-title h2 {
+  .customer-section-title h1 {
     font-size: 19px;
   }
   .customer-item {
@@ -2741,9 +2643,6 @@ form > small {
 .table-chip {
   font-size: 11px;
 }
-.location {
-  font-size: 12px;
-}
 .restaurant-card-body > p {
   color: #718168;
 }
@@ -2751,10 +2650,6 @@ form > small {
   color: #718168;
 }
 @media (max-width: 500px) {
-  .menu-hero-art {
-    right: -38px;
-    opacity: 0.32;
-  }
   .call-copy strong {
     font-size: 12px;
   }

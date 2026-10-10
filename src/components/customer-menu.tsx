@@ -7,7 +7,6 @@ import {
   CheckCheck,
   Coffee,
   Leaf,
-  MapPin,
   Search,
   UtensilsCrossed,
 } from 'lucide-react';
@@ -126,25 +125,6 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
             </span>
           )}
         </header>
-        <section className="menu-hero">
-          <span className="eyebrow">SETTLE IN. STAY A WHILE.</span>
-          <h1>
-            Something good
-            <br />
-            is on the <em>menu.</em>
-          </h1>
-          <p>{r.tagline || 'Find your favourites. We’ll take care of the rest.'}</p>
-          {r.address && (
-            <span className="location">
-              <MapPin size={14} />
-              {r.address}
-            </span>
-          )}
-          <div className="menu-hero-art">
-            <Coffee size={100} strokeWidth={0.7} />
-            <span className="hero-ring" />
-          </div>
-        </section>
         {r.ad_image && !adFailed && (
           <aside className="sponsor-card">
             <img
@@ -166,7 +146,7 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
         )}
         <section className="customer-menu-section">
           <div className="customer-section-title">
-            <h2>Made for your mood.</h2>
+            <h1>Menu</h1>
             <span>{data.menu.length} items</span>
           </div>
           <label className="search-field customer-search">

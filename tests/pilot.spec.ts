@@ -226,7 +226,7 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await expect(staffPage.getByRole('button', { name: 'Sound on' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/t/${w.tables[1].token}`);
-  await expect(page.getByRole('heading', { name: 'Something good is on the menu.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Menu', exact: true, level: 1 })).toBeVisible();
   await page.getByRole('button', { name: 'Call waiter' }).click();
   await expect(page.getByText('Request sent', { exact: true })).toBeVisible();
   await expect(
