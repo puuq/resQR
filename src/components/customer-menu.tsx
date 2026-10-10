@@ -125,25 +125,6 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
             </span>
           )}
         </header>
-        {r.ad_image && !adFailed && (
-          <aside className="sponsor-card">
-            <img
-              src={r.ad_image}
-              alt={r.ad_title || 'Sponsor advertisement'}
-              onError={() => setAdFailed(true)}
-            />
-            <div>
-              <span className="sponsored-label">SPONSORED</span>
-              <strong>{r.ad_title || 'A little local discovery'}</strong>
-              {r.ad_url && (
-                <a href={r.ad_url} target="_blank" rel="sponsored noopener noreferrer">
-                  Discover more
-                  <ArrowUpRight size={13} />
-                </a>
-              )}
-            </div>
-          </aside>
-        )}
         <section className="customer-menu-section">
           <div className="customer-section-title">
             <h1>Menu</h1>
@@ -169,6 +150,25 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
               </button>
             ))}
           </nav>
+          {r.ad_image && !adFailed && (
+            <aside className="sponsor-card">
+              <img
+                src={r.ad_image}
+                alt={r.ad_title || 'Sponsor advertisement'}
+                onError={() => setAdFailed(true)}
+              />
+              <div>
+                <span className="sponsored-label">SPONSORED</span>
+                <strong>{r.ad_title || 'A little local discovery'}</strong>
+                {r.ad_url && (
+                  <a href={r.ad_url} target="_blank" rel="sponsored noopener noreferrer">
+                    Discover more
+                    <ArrowUpRight size={13} />
+                  </a>
+                )}
+              </div>
+            </aside>
+          )}
           {!items.length ? (
             <div className="empty-panel">
               <UtensilsCrossed size={30} />
