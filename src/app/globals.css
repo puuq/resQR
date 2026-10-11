@@ -1656,8 +1656,11 @@ form > small {
   --surface: #fff;
   --bg: #faf9f5;
   background: var(--bg);
-  min-height: 100vh;
-  padding-bottom: 120px;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .customer-page.dark {
   --bg: #1c2822;
@@ -1671,6 +1674,47 @@ form > small {
   max-width: 860px;
   margin: 0 auto;
   padding: 0 30px;
+}
+.customer-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-padding-block: 16px;
+}
+.customer-scroll:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+.customer-ad-rail {
+  display: grid;
+  grid-template-rows: 1fr;
+  flex-shrink: 0;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  transition:
+    grid-template-rows 180ms ease-out,
+    opacity 180ms ease-out;
+}
+.customer-ad-rail.is-dismissed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  border-top-width: 0;
+  pointer-events: none;
+}
+.customer-ad-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+.customer-ad-inner {
+  max-width: 860px;
+  margin: auto;
+  padding: 8px 30px 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .customer-ad-rail {
+    transition: none;
+  }
 }
 .customer-top {
   display: flex;
@@ -1746,8 +1790,7 @@ form > small {
   margin-top: 2px;
 }
 .menu-advertisement {
-  grid-column: 1 / -1;
-  margin: 8px 0;
+  margin: 0;
 }
 .menu-ad-space {
   display: flex;
@@ -1964,10 +2007,7 @@ form > small {
   color: #b68c62;
 }
 .call-dock {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  flex-shrink: 0;
   background: var(--surface);
   border-top: 1px solid var(--line);
   box-shadow: 0 -8px 28px #19291906;
@@ -2025,6 +2065,7 @@ form > small {
   font-size: 11px;
 }
 .browse-note {
+  flex-shrink: 0;
   font-size: 11px;
   color: var(--muted);
   text-align: center;
@@ -2390,6 +2431,9 @@ form > small {
   .customer-container {
     max-width: 650px;
   }
+  .customer-ad-inner {
+    max-width: 650px;
+  }
   .customer-items {
     grid-template-columns: 1fr;
   }
@@ -2594,6 +2638,9 @@ form > small {
   }
   .customer-container {
     padding: 0 20px;
+  }
+  .customer-ad-inner {
+    padding: 8px 20px 12px;
   }
   .customer-name {
     font-size: 14px;

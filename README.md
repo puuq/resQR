@@ -13,6 +13,8 @@ The setup form validates contact details, preserves inputs on failure and confir
 - Cookie sessions, server-side role/restaurant checks, parameterized SQL, atomic duplicate-call protection.
 - Locally bundled fonts. No advertising trackers, payment flows or third-party ad network.
 
+On customer menus, the advertisement occupies a separate compact strip above the waiter bar when the page opens. It slides away after the customer starts scrolling, giving the menu more room; it does not reappear during that visit. The menu and advertisement never overlap, and the waiter button stays available. The resQR/Splitr promotion strip remains near the menu heading.
+
 ## Develop locally
 
 Node 22 is recommended.

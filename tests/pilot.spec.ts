@@ -230,7 +230,7 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   });
   await ownerContext.close();
   await owner.dispose();
-  // Product promotions scroll away; a separate ad slot follows four menu items.
+  // The advertisement has its own initial strip above the waiter bar, outside the menu.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/t/${w.tables[0].token}`);
   const menuHeading = page.getByRole('heading', { name: 'Menu', exact: true, level: 1 });
@@ -270,17 +270,37 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await expect(projects.getByText('Coming soon', { exact: true })).toBeVisible();
   const advertisement = page.getByRole('complementary', { name: 'Advertisement', exact: true });
   await expect(advertisement).toHaveCount(1);
+  await expect(advertisement).toBeInViewport();
   await expect(advertisement.getByText('Local sponsor', { exact: true })).toBeVisible();
+  const menuScroll = page.getByRole('main', { name: 'Juniper Coffee House menu', exact: true });
+  await expect(
+    menuScroll.getByRole('complementary', { name: 'Advertisement', exact: true }),
+  ).toHaveCount(0);
+  for (const width of [320, 390, 1440]) {
+    await page.setViewportSize({ width, height: 844 });
+    await expect(advertisement).toBeInViewport();
+    const scrollBox = (await menuScroll.boundingBox())!;
+    const railBox = (await page.locator('.customer-ad-rail').boundingBox())!;
+    const dockBox = (await page.locator('.call-dock').boundingBox())!;
+    expect(scrollBox.y + scrollBox.height).toBeLessThanOrEqual(railBox.y + 1);
+    expect(railBox.y + railBox.height).toBeCloseTo(dockBox.y, 0);
+    expect(dockBox.y + dockBox.height).toBeCloseTo(844, 0);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
   const fourthDish = page.locator('.customer-item').nth(3);
-  expect((await advertisement.boundingBox())!.y).toBeGreaterThan(
-    (await fourthDish.boundingBox())!.y,
-  );
   expect((await menuHeading.boundingBox())!.y).toBeLessThan(150);
-  await page.screenshot({ path: '.local/customer-sponsored-mobile.png', fullPage: true });
-  await advertisement.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '.local/customer-ad-initial-dark.png' });
+  await fourthDish.scrollIntoViewIfNeeded();
+  await expect(advertisement).not.toBeVisible();
+  await expect
+    .poll(async () => (await page.locator('.customer-ad-rail').boundingBox())!.height)
+    .toBeLessThan(1);
+  await expect(fourthDish).toBeInViewport();
+  await menuScroll.evaluate((element) => element.scrollTo(0, 600));
   await expect(projects).not.toBeInViewport();
   await expect(reviewLink).not.toBeInViewport();
   await expect(page.getByRole('button', { name: 'Call waiter', exact: true })).toBeInViewport();
+  await page.screenshot({ path: '.local/customer-ad-scrolled-dark.png' });
   // Restore the light menu for the customer screenshot.
   expect(
     (

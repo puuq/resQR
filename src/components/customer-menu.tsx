@@ -1,5 +1,5 @@
 'use client';
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowUpRight,
   BellRing,
@@ -23,9 +23,11 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
   const [busy, setBusy] = useState(false);
   const [category, setCategory] = useState('All');
   const [search, setSearch] = useState('');
+  const [adDismissed, setAdDismissed] = useState(false);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
+    setAdDismissed(false);
     api<PublicMenu>(
       `/api/public?${tableToken ? `table=${tableToken}` : `slug=${encodeURIComponent(slug || '')}`}`,
     )
@@ -107,81 +109,93 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
       className={`customer-page ${r.theme === 'dark' ? 'dark' : ''}`}
       style={brandStyle(r.color)}
     >
-      <main className="customer-container">
-        <header className="customer-top">
-          <a href={`/r/${r.slug}`} className="customer-name">
-            {r.logo ? (
-              <img src={r.logo} alt={`${r.name} logo`} />
-            ) : (
-              <span className="customer-logo">
-                <Coffee size={23} />
+      <main
+        className="customer-scroll"
+        tabIndex={0}
+        aria-label={`${r.name} menu`}
+        onScroll={(event) => {
+          if (!adDismissed && event.currentTarget.scrollTop > 24) setAdDismissed(true);
+        }}
+      >
+        <div className="customer-container">
+          <header className="customer-top">
+            <a href={`/r/${r.slug}`} className="customer-name">
+              {r.logo ? (
+                <img src={r.logo} alt={`${r.name} logo`} />
+              ) : (
+                <span className="customer-logo">
+                  <Coffee size={23} />
+                </span>
+              )}
+              <strong>{r.name}</strong>
+            </a>
+            {data.table && (
+              <span className="table-chip">
+                <span className="status-dot" />
+                {data.table.label}
               </span>
             )}
-            <strong>{r.name}</strong>
-          </a>
-          {data.table && (
-            <span className="table-chip">
-              <span className="status-dot" />
-              {data.table.label}
-            </span>
-          )}
-        </header>
-        <section className="customer-menu-section">
-          <div className="customer-section-title">
-            <div className="customer-menu-label">
-              <h1>Menu</h1>
-              <span>{data.menu.length} items</span>
+          </header>
+          <section className="customer-menu-section">
+            <div className="customer-section-title">
+              <div className="customer-menu-label">
+                <h1>Menu</h1>
+                <span>{data.menu.length} items</span>
+              </div>
+              {r.google_review_url && (
+                <a
+                  className="google-review-link"
+                  href={r.google_review_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Review ${r.name} on Google (opens in a new tab)`}
+                >
+                  <Star size={14} aria-hidden="true" />
+                  Review on Google
+                  <ArrowUpRight size={13} aria-hidden="true" />
+                </a>
+              )}
             </div>
-            {r.google_review_url && (
-              <a
-                className="google-review-link"
-                href={r.google_review_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Review ${r.name} on Google (opens in a new tab)`}
-              >
-                <Star size={14} aria-hidden="true" />
-                Review on Google
-                <ArrowUpRight size={13} aria-hidden="true" />
-              </a>
-            )}
-          </div>
-          <MenuPromotions />
-          <label className="search-field customer-search">
-            <Search size={18} />
-            <input
-              aria-label="Search food and drinks"
-              placeholder="Find your next favourite…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </label>
-          <nav className="category-tabs" aria-label="Menu categories">
-            {categories.map((c) => (
-              <button
-                className={category === c ? 'selected' : ''}
-                key={c}
-                onClick={() => setCategory(c)}
-              >
-                {c}
-              </button>
-            ))}
-          </nav>
-          {!items.length ? (
-            <div className="empty-panel">
-              <UtensilsCrossed size={30} />
-              <h2>{data.menu.length ? 'Nothing matches just yet.' : 'Good things are coming.'}</h2>
-              <p>
-                {data.menu.length
-                  ? 'Try another search or category.'
-                  : 'Our menu is being updated. Please ask your waiter.'}
-              </p>
-            </div>
-          ) : (
-            <div className="customer-items">
-              {items.map((item, index) => (
-                <Fragment key={item.id}>
-                  <article className={`customer-item ${!item.available ? 'sold-out' : ''}`}>
+            <MenuPromotions />
+            <label className="search-field customer-search">
+              <Search size={18} />
+              <input
+                aria-label="Search food and drinks"
+                placeholder="Find your next favourite…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </label>
+            <nav className="category-tabs" aria-label="Menu categories">
+              {categories.map((c) => (
+                <button
+                  className={category === c ? 'selected' : ''}
+                  key={c}
+                  onClick={() => setCategory(c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </nav>
+            {!items.length ? (
+              <div className="empty-panel">
+                <UtensilsCrossed size={30} />
+                <h2>
+                  {data.menu.length ? 'Nothing matches just yet.' : 'Good things are coming.'}
+                </h2>
+                <p>
+                  {data.menu.length
+                    ? 'Try another search or category.'
+                    : 'Our menu is being updated. Please ask your waiter.'}
+                </p>
+              </div>
+            ) : (
+              <div className="customer-items">
+                {items.map((item) => (
+                  <article
+                    key={item.id}
+                    className={`customer-item ${!item.available ? 'sold-out' : ''}`}
+                  >
                     <div className="customer-item-body">
                       <div className="dish-category">
                         {item.category}
@@ -203,25 +217,34 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                       <img className="dish-image" src={item.image} alt={item.name} loading="lazy" />
                     )}
                   </article>
-                  {index === Math.min(4, items.length) - 1 && <MenuAdvertisement restaurant={r} />}
-                </Fragment>
-              ))}
-            </div>
-          )}
-          {!items.length && <MenuAdvertisement restaurant={r} />}
-          <p className="menu-footnote">
-            Please tell your waiter about any allergies or dietary requirements.
-            <br />
-            Orders are taken by your waiter. Prices shown in NPR.
-          </p>
-        </section>
-        <footer className="customer-footer">
-          <span>A little closer to your guests.</span>
-          <strong>
-            resQR<span>.</span>
-          </strong>
-        </footer>
+                ))}
+              </div>
+            )}
+            <p className="menu-footnote">
+              Please tell your waiter about any allergies or dietary requirements.
+              <br />
+              Orders are taken by your waiter. Prices shown in NPR.
+            </p>
+          </section>
+          <footer className="customer-footer">
+            <span>A little closer to your guests.</span>
+            <strong>
+              resQR<span>.</span>
+            </strong>
+          </footer>
+        </div>
       </main>
+      <div
+        className={`customer-ad-rail ${adDismissed ? 'is-dismissed' : ''}`}
+        aria-hidden={adDismissed}
+        inert={adDismissed}
+      >
+        <div className="customer-ad-clip">
+          <div className="customer-ad-inner">
+            <MenuAdvertisement restaurant={r} />
+          </div>
+        </div>
+      </div>
       {tableToken && (
         <div className="call-dock">
           <div className="call-dock-inner">
