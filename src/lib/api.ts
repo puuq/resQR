@@ -37,11 +37,12 @@ export function handler(fn: (request: Request) => Promise<Response>) {
     }
   };
 }
-export async function body(request: Request) {
-  if (Number(request.headers.get('content-length') || 0) > 100000)
+export async function body(request: Request, maxBytes = 100000) {
+  if (Number(request.headers.get('content-length') || 0) > maxBytes)
     throw new ApiError(413, 'Request is too large.');
   const text = await request.text();
-  if (text.length > 100000) throw new ApiError(413, 'Request is too large.');
+  if (new TextEncoder().encode(text).byteLength > maxBytes)
+    throw new ApiError(413, 'Request is too large.');
   return JSON.parse(text);
 }
 export async function requireUser() {

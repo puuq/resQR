@@ -1,6 +1,6 @@
 import { access, ApiError, body, handler, json, requireUser } from '@/lib/api';
 import { database, id, token } from '@/lib/db';
-import { restaurantInput } from '@/lib/validation';
+import { restaurantInput, restaurantCreateInput } from '@/lib/validation';
 import { sampleMenu } from '@/lib/sample-menu';
 export const dynamic = 'force-dynamic';
 export const GET = handler(async () => {
@@ -18,7 +18,7 @@ export const POST = handler(async (request) => {
   const user = await requireUser();
   if (user.role !== 'platform')
     throw new ApiError(403, 'Only the platform administrator can create restaurants.');
-  const data = restaurantInput.parse(await body(request));
+  const data = restaurantCreateInput.parse(await body(request, 300000));
   const db = await database();
   if (await db.prepare('SELECT id FROM restaurants WHERE slug=?').bind(data.slug).first())
     throw new ApiError(409, 'This URL is already in use. Choose another.');
@@ -47,32 +47,51 @@ export const POST = handler(async (request) => {
         now,
       ),
   ];
-  for (let i = 1; i <= data.table_count; i++)
+  // JSON rowsets keep even 100 tables + 200 dishes below D1's free-plan query limit.
+  statements.push(
+    db
+      .prepare(
+        `INSERT INTO dining_tables(id,restaurant_id,label,token,created_at)
+    SELECT json_extract(value,'$.id'), ?, json_extract(value,'$.label'),
+      json_extract(value,'$.token'), ? FROM json_each(?)`,
+      )
+      .bind(
+        restaurantId,
+        now,
+        JSON.stringify(
+          Array.from({ length: data.table_count }, (_, i) => ({
+            id: id(),
+            label: `Table ${i + 1}`,
+            token: token(),
+          })),
+        ),
+      ),
+  );
+  const menu = data.imported_menu.length ? data.imported_menu : data.sample_menu ? sampleMenu : [];
+  if (menu.length)
     statements.push(
       db
         .prepare(
-          'INSERT INTO dining_tables(id,restaurant_id,label,token,created_at) VALUES(?,?,?,?,?)',
+          `INSERT INTO menu_items
+    (id,restaurant_id,category,name,description,price,vegetarian,available,image,sort_order)
+    SELECT json_extract(value,'$.id'), ?, json_extract(value,'$.category'),
+      json_extract(value,'$.name'), json_extract(value,'$.description'),
+      json_extract(value,'$.price'), json_extract(value,'$.vegetarian'),
+      json_extract(value,'$.available'), json_extract(value,'$.image'),
+      CAST(key AS INTEGER) FROM json_each(?)`,
         )
-        .bind(id(), restaurantId, `Table ${i}`, token(), now),
-    );
-  if (data.sample_menu)
-    sampleMenu.forEach((item, index) =>
-      statements.push(
-        db
-          .prepare(
-            'INSERT INTO menu_items(id,restaurant_id,category,name,description,price,vegetarian,sort_order) VALUES(?,?,?,?,?,?,?,?)',
-          )
-          .bind(
-            id(),
-            restaurantId,
-            item.category,
-            item.name,
-            item.description,
-            item.price,
-            item.vegetarian,
-            index,
+        .bind(
+          restaurantId,
+          JSON.stringify(
+            menu.map((item) => ({
+              ...item,
+              id: id(),
+              vegetarian: item.vegetarian ? 1 : 0,
+              available: 'available' in item && !item.available ? 0 : 1,
+              image: 'image' in item ? item.image : '',
+            })),
           ),
-      ),
+        ),
     );
   await db.batch(statements);
   return json({ id: restaurantId }, 201);

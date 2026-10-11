@@ -79,6 +79,18 @@ The repository's GitHub workflow runs type checks, integration tests in both the
 
 ## Demonstrate at a café
 
+### Import a printed menu
+
+In **Add restaurant → Import your menu**, choose one or more PDFs/photos (PDF, JPG, PNG or WebP). Up to 10 files, 8 MB per file and 10 MB combined are accepted. Read the files, correct the editable names/categories/descriptions/prices, remove unwanted dishes, and confirm you checked the draft. Creating the restaurant saves its tables and up to 200 reviewed dishes atomically. Importing disables the sample menu. Missing prices must be filled in; amounts are entered in rupees and stored as integer paisa. Unknown dietary labels remain unlabelled on the customer menu. Menu images are not automatically cropped into dish photos.
+
+Automatic reading uses Google Gemini and needs a server-side key. Create a key at [Google AI Studio](https://aistudio.google.com/api-keys), keep billing disabled to use available free quota, and add **GEMINI_API_KEY** as a Secret in Cloudflare → Workers & Pages → resqr → Settings → Variables and Secrets. Alternatively run `npx wrangler secret put GEMINI_API_KEY` and enter the key at its private prompt. Never commit it or use a `NEXT_PUBLIC_` variable. For local development, add it to ignored `.dev.vars`. The form reports when the reader is not configured; manual setup still works. No key is bundled with this feature.
+
+The default model is `gemini-2.5-flash`; optional runtime variable `MENU_IMPORT_MODEL` can select another compatible Gemini model after testing it. No SDK, extra Worker, database migration or VPS is needed. The reader allows six attempts per admin per hour and twenty per day, bounds upload size, checks file signatures, and rejects invalid/truncated AI results. It does not automatically retry quota errors or switch to a paid provider. These application limits do not guarantee a particular Google free quota or prevent charges if billing is enabled on the Google project; check [Google's pricing](https://ai.google.dev/gemini-api/docs/pricing).
+
+The form explains that uploaded menu bytes are sent to Google and that free-tier data may be used to improve its products. Use public menu pages only. Original files and unfinished drafts are not saved in D1/R2. A failed extraction preserves the existing draft; a successful reread replaces it. Check the result against the originals: OCR may miss dishes or misread variant columns, taxes and blurred prices. Large/unclear PDFs should be split into smaller batches. Closing the form discards the draft. Extraction requires the configured key and real menu testing before it can be considered verified end to end.
+
+Tests mock provider responses without sending files to Google or consuming quota. They cover multiple files, uncertain prices, invalid/truncated results, quota failures, authentication, draft review/correction, failure recovery, mobile layout, and a real local D1 transaction with 200 dishes and 100 tables.
+
 1. Sign in as platform admin and add a restaurant. Optionally start with the clearly labelled sample menu.
 2. Upload the logo, set the brand colour and menu appearance, and enter actual dishes/prices.
 3. Add the table count, then rename tables if needed. Optionally enter the **guest** Wi-Fi network details.

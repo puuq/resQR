@@ -4,6 +4,8 @@ import { ArrowRight, Check, Coffee } from 'lucide-react';
 import type { Restaurant } from '@/lib/types';
 import { api, brandStyle } from '@/lib/client';
 import { ErrorBox, ImageUpload } from './ui';
+import { MenuImporter } from './menu-importer';
+import type { ImportedDish } from '@/lib/menu-import';
 export function RestaurantForm({
   initial,
   onSaved,
@@ -22,8 +24,19 @@ export function RestaurantForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [importedMenu, setImportedMenu] = useState<ImportedDish[]>([]);
+  const [menuReviewed, setMenuReviewed] = useState(false);
+  const [importBusy, setImportBusy] = useState(false);
+  const [sampleMenu, setSampleMenu] = useState(true);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (importBusy) return;
+    if (!initial && importedMenu.length && !menuReviewed) {
+      setError(
+        'Review the imported dishes and confirm their prices before creating the restaurant.',
+      );
+      return;
+    }
     setBusy(true);
     setError('');
     setSaved(false);
@@ -41,7 +54,19 @@ export function RestaurantForm({
           logo,
           ad_image: adImage,
           table_count: Number(f.get('table_count') || 6),
-          sample_menu: f.get('sample_menu') === 'on',
+          sample_menu: !initial && !importedMenu.length && sampleMenu,
+          ...(!initial
+            ? {
+                menu_reviewed: menuReviewed,
+                imported_menu: importedMenu.map((item) => ({
+                  name: item.name,
+                  category: item.category,
+                  description: item.description,
+                  price: item.price,
+                  vegetarian: item.vegetarian === true,
+                })),
+              }
+            : {}),
         }),
       });
       setSaved(true);
@@ -114,12 +139,30 @@ export function RestaurantForm({
             <input name="table_count" type="number" required min={1} max={100} defaultValue={6} />
           </label>
           <label className="check-label">
-            <input name="sample_menu" type="checkbox" defaultChecked />
+            <input
+              name="sample_menu"
+              type="checkbox"
+              checked={sampleMenu && !importedMenu.length}
+              disabled={!!importedMenu.length || importBusy}
+              onChange={(e) => setSampleMenu(e.target.checked)}
+            />
             <span>
               Start with a sample menu<small>Edit these demo dishes before going live.</small>
             </span>
           </label>
         </div>
+      )}
+      {!initial && (
+        <MenuImporter
+          items={importedMenu}
+          reviewed={menuReviewed}
+          onReviewed={setMenuReviewed}
+          onBusy={setImportBusy}
+          onChange={(items) => {
+            setImportedMenu(items);
+            if (items.length) setSampleMenu(false);
+          }}
+        />
       )}
       <div className="form-divider">
         <span>MAKE IT YOURS</span>
@@ -191,8 +234,8 @@ export function RestaurantForm({
         />
       </label>
       <small>
-        Copy your link from Google Business Profile → Read reviews → Get more reviews.
-        Customers can open it from the Menu heading. Leave empty to hide the button.
+        Copy your link from Google Business Profile → Read reviews → Get more reviews. Customers can
+        open it from the Menu heading. Leave empty to hide the button.
       </small>
       {initial && canEditAd && (
         <>
@@ -227,7 +270,7 @@ export function RestaurantForm({
             Saved
           </span>
         )}
-        <button className="button primary" disabled={busy}>
+        <button className="button primary" disabled={busy || importBusy}>
           {busy ? 'Saving…' : initial ? 'Save changes' : 'Create restaurant'}
           {!initial && <ArrowRight size={16} />}
         </button>

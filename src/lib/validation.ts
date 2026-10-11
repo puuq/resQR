@@ -83,3 +83,20 @@ export const menuInput = z.object({
   image: image.default(''),
   sort_order: z.number().int().min(0).max(10000).default(0),
 });
+export const restaurantCreateInput = restaurantInput
+  .extend({
+    imported_menu: z.array(menuInput).max(200, 'Import up to 200 dishes at a time.').default([]),
+    menu_reviewed: z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (data.imported_menu.length && !data.menu_reviewed)
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Review the imported menu before creating the restaurant.',
+      });
+    if (data.imported_menu.length && data.sample_menu)
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Choose the imported menu or the sample menu, not both.',
+      });
+  });

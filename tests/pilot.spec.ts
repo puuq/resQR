@@ -73,6 +73,61 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
     ).status(),
   ).toBe(403);
   const guest = await playwright.request.newContext({ baseURL: 'http://localhost:3000' });
+  expect((await guest.get('/api/menu-import')).status()).toBe(401);
+  expect((await guest.post('/api/menu-import')).status()).toBe(401);
+  expect((await waiter.get('/api/menu-import')).status()).toBe(403);
+  expect((await waiter.post('/api/menu-import')).status()).toBe(403);
+  const readerConfig = await admin.get('/api/menu-import');
+  expect(readerConfig.status()).toBe(200);
+  expect(Object.keys(await readerConfig.json())).toEqual(['enabled']);
+  const imported = {
+    name: 'Imported café',
+    slug: `imported-${suffix}`,
+    table_count: 100,
+    menu_reviewed: true,
+    imported_menu: Array.from({ length: 200 }, (_, i) => ({
+      name: `Dish ${i + 1}`,
+      category: 'Kitchen',
+      description: 'From a reviewed menu',
+      price: 120.5,
+      vegetarian: false,
+    })),
+  };
+  expect(
+    (
+      await admin.post('/api/restaurants', { data: { ...imported, menu_reviewed: false } })
+    ).status(),
+  ).toBe(400);
+  expect(
+    (await admin.post('/api/restaurants', { data: { ...imported, sample_menu: true } })).status(),
+  ).toBe(400);
+  expect(
+    (
+      await admin.post('/api/restaurants', {
+        data: { ...imported, imported_menu: [{ ...imported.imported_menu[0], price: null }] },
+      })
+    ).status(),
+  ).toBe(400);
+  expect(
+    (
+      await admin.post('/api/restaurants', {
+        data: { ...imported, imported_menu: Array(201).fill(imported.imported_menu[0]) },
+      })
+    ).status(),
+  ).toBe(400);
+  expect(
+    (await (await admin.get('/api/restaurants')).json()).restaurants.some(
+      (restaurant: { slug: string }) => restaurant.slug === imported.slug,
+    ),
+  ).toBeFalsy();
+  const bulk = await admin.post('/api/restaurants', { data: imported });
+  expect(bulk.status()).toBe(201);
+  const bulkId = (await bulk.json()).id;
+  const bulkWorkspace = await (await admin.get(`/api/workspace?restaurant=${bulkId}`)).json();
+  expect(bulkWorkspace.tables).toHaveLength(100);
+  expect(bulkWorkspace.menu).toHaveLength(200);
+  expect(bulkWorkspace.menu[0]).toMatchObject({ price: 12050, name: 'Dish 1', sort_order: 0 });
+  expect(bulkWorkspace.menu[199]).toMatchObject({ name: 'Dish 200', sort_order: 199 });
   expect((await guest.get('/api/inquiries')).status()).toBe(401);
   expect(
     (await guest.patch('/api/inquiries', { data: { id: 1, status: 'contacted' } })).status(),
@@ -493,7 +548,100 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await adminPage.getByRole('button', { name: 'Add restaurant', exact: true }).click();
   await adminPage.getByLabel('Restaurant name', { exact: true }).fill('Little Fern');
   await expect(adminPage.getByLabel('Menu URL name')).toHaveValue('little-fern');
+  await adminPage.route('**/api/menu-import', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(
+        route.request().method() === 'GET'
+          ? { enabled: true }
+          : {
+              items: [
+                {
+                  name: 'Masala chiya',
+                  category: 'Tea',
+                  description: '',
+                  price: 120,
+                  vegetarian: null,
+                  note: '',
+                },
+                {
+                  name: 'Momo — chicken',
+                  category: 'Kitchen',
+                  description: '',
+                  price: null,
+                  vegetarian: false,
+                  note: 'Price blurred',
+                },
+              ],
+              warnings: ['Check the second price.'],
+            },
+      ),
+    }),
+  );
+  // Reopen so the reader status check uses the mocked provider; final creation still uses real D1.
   await adminPage.getByRole('button', { name: 'Close dialog' }).click();
+  await adminPage.getByRole('button', { name: 'Add restaurant', exact: true }).click();
+  await adminPage.getByLabel('Restaurant name', { exact: true }).fill(`Menu import ${suffix}`);
+  await adminPage.locator('.menu-file-picker input').setInputFiles([
+    { name: 'menu.png', mimeType: 'image/png', buffer: image },
+    {
+      name: 'page-two.pdf',
+      mimeType: 'application/pdf',
+      buffer: Buffer.from('%PDF-1.7 test fixture'),
+    },
+  ]);
+  await adminPage.getByRole('button', { name: 'Read menu files', exact: true }).click();
+  await expect(adminPage.getByText('2 dishes to review', { exact: true })).toBeVisible();
+  await expect(adminPage.getByLabel('Start with a sample menu')).not.toBeChecked();
+  await expect(adminPage.getByLabel('Dish 2 price')).toHaveValue('');
+  await adminPage.getByRole('button', { name: 'Create restaurant', exact: true }).click();
+  await expect(adminPage.getByRole('dialog')).toBeVisible();
+  await adminPage.getByLabel('Dish 2 price').fill('260.50');
+  await adminPage.getByRole('button', { name: 'Create restaurant', exact: true }).click();
+  await expect(adminPage.getByRole('dialog').getByRole('alert')).toContainText(
+    'Review the imported dishes',
+  );
+  // Reader failure must preserve corrections, restaurant fields and the draft.
+  await adminPage.route(
+    '**/api/menu-import',
+    (route) =>
+      route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Free quota exhausted. Try later.' }),
+      }),
+    { times: 1 },
+  );
+  await adminPage.getByRole('button', { name: 'Read again (replaces draft)' }).click();
+  await expect(adminPage.getByLabel('Dish 2 price')).toHaveValue('260.50');
+  await expect(adminPage.getByLabel('Restaurant name', { exact: true })).toHaveValue(
+    `Menu import ${suffix}`,
+  );
+  await adminPage.setViewportSize({ width: 390, height: 844 });
+  await adminPage.getByText('2 dishes to review', { exact: true }).scrollIntoViewIfNeeded();
+  await adminPage.screenshot({ path: '.local/menu-import-mobile.png' });
+  expect(
+    await adminPage
+      .getByRole('dialog')
+      .evaluate((element) => element.scrollWidth <= element.clientWidth),
+  ).toBeTruthy();
+  await adminPage.getByLabel('I checked the imported dishes and prices.').check();
+  await adminPage.getByRole('button', { name: 'Create restaurant', exact: true }).click();
+  await expect(adminPage.getByRole('dialog')).toHaveCount(0);
+  const importedRestaurant = (await (await admin.get('/api/restaurants')).json()).restaurants.find(
+    (restaurant: { name: string }) => restaurant.name === `Menu import ${suffix}`,
+  );
+  const importedWorkspace = await (
+    await admin.get(`/api/workspace?restaurant=${importedRestaurant.id}`)
+  ).json();
+  expect(importedWorkspace.menu).toHaveLength(2);
+  expect(
+    importedWorkspace.menu.find((item: { name: string }) => item.name === 'Momo — chicken').price,
+  ).toBe(26050);
+  await adminPage.unroute('**/api/menu-import');
+  await adminPage.setViewportSize({ width: 1440, height: 1000 });
+  await adminPage.goto('/dashboard');
   await adminPage.getByRole('button', { name: 'Setup requests', exact: true }).click();
   const inquiryCard = adminPage
     .locator('.inquiry-card')
