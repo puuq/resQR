@@ -1709,7 +1709,7 @@ form > small {
 .customer-ad-inner {
   max-width: 860px;
   margin: auto;
-  padding: 8px 30px 12px;
+  padding: 4px 30px 6px;
 }
 @media (prefers-reduced-motion: reduce) {
   .customer-ad-rail {
@@ -1795,35 +1795,42 @@ form > small {
 .menu-ad-space {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   border: 1px solid var(--line);
   background: var(--surface);
-  border-radius: 10px;
-  padding: 12px;
-  min-height: 82px;
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-height: 46px;
   overflow: hidden;
 }
 .menu-ad-space > img {
-  width: 96px;
-  height: 62px;
+  width: 48px;
+  height: 32px;
   object-fit: contain;
   border-radius: 6px;
   flex-shrink: 0;
 }
 .menu-ad-space > div {
   min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .advertisement-label {
   display: block;
   font-size: 9px;
   letter-spacing: 0.5px;
   color: var(--muted);
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 .menu-ad-space strong {
   font-size: 12px;
   display: block;
-  overflow-wrap: anywhere;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .menu-ad-space a {
   font-size: 10px;
@@ -1831,7 +1838,9 @@ form > small {
   align-items: center;
   gap: 4px;
   color: var(--brand-button);
-  margin-top: 7px;
+  min-height: 32px;
+  flex-shrink: 0;
+  margin-top: 0;
 }
 .customer-section-title {
   display: flex;
@@ -2640,7 +2649,7 @@ form > small {
     padding: 0 20px;
   }
   .customer-ad-inner {
-    padding: 8px 20px 12px;
+    padding: 4px 20px 6px;
   }
   .customer-name {
     font-size: 14px;
