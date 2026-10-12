@@ -200,6 +200,7 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                 <button
                   className={category === c ? 'selected' : ''}
                   key={c}
+                  aria-pressed={category === c}
                   onClick={() => setCategory(c)}
                 >
                   {c}
@@ -226,7 +227,12 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                     key={name}
                     aria-label={`${name} menu items`}
                   >
-                    <h2 className="customer-category-title">{name}</h2>
+                    <div className="customer-category-heading">
+                      <h2 className="customer-category-title">{name}</h2>
+                      <span className="customer-category-count">
+                        {categoryItems.length} {categoryItems.length === 1 ? 'item' : 'items'}
+                      </span>
+                    </div>
                     <div className="customer-category-items">
                       {categoryItems.map((item) => (
                         <article
@@ -247,7 +253,10 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                                   </span>
                                 )}
                               </div>
-                              <strong className="dish-price">{money(item.price)}</strong>
+                              <strong className="dish-price">
+                                <span className="dish-currency">Rs.</span>{' '}
+                                {money(item.price).slice(4)}
+                              </strong>
                             </div>
                             {(item.image || item.description) && (
                               <div className="dish-details">
