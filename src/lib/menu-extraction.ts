@@ -117,7 +117,7 @@ export async function extractMenu(
       );
     // Some model/project combinations reject structured-output settings.
     // Retry only that rejected request in JSON mode; validation remains mandatory.
-    if (useResponseSchema && /schema|response.?format|structured.?output/i.test(failure?.error?.message || ''))
+    if (useResponseSchema)
       return extractMenu(files, key, model, fetcher, false);
     throw new ApiError(
       502,
