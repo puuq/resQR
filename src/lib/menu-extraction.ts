@@ -1,6 +1,10 @@
 import { Buffer } from 'node:buffer';
+import { z } from 'zod';
 import { ApiError } from './api';
 import { menuExtraction, MENU_ITEM_LIMIT } from './menu-import';
+
+const responseJsonSchema = z.toJSONSchema(menuExtraction, { target: 'draft-7' });
+delete responseJsonSchema.$schema;
 
 export function menuMime(bytes: Uint8Array) {
   const starts = (...signature: number[]) => signature.every((n, i) => bytes[i] === n);
@@ -38,6 +42,7 @@ export async function extractMenu(
   key: string,
   model = 'gemini-3.5-flash-lite',
   fetcher: typeof fetch = fetch,
+  useResponseSchema = true,
 ) {
   if (!/^[a-z0-9.-]+$/.test(model))
     throw new ApiError(503, 'The menu reader model is not configured correctly.');
@@ -73,8 +78,7 @@ export async function extractMenu(
               ? { thinkingConfig: { thinkingBudget: 0 } }
               : {}),
             responseMimeType: 'application/json',
-            // Plain JSON mode accepts this project's API request. The returned object
-            // still passes the full local schema below before it can reach the draft UI.
+            ...(useResponseSchema ? { responseJsonSchema } : {}),
           },
         }),
       },
@@ -111,6 +115,10 @@ export async function extractMenu(
         503,
         'Gemini rejected the API key. Copy the key value from AI Studio into the GEMINI_API_KEY Worker secret and deploy it.',
       );
+    // Some model/project combinations reject structured-output settings.
+    // Retry only that rejected request in JSON mode; validation remains mandatory.
+    if (useResponseSchema && /schema|response.?format|structured.?output/i.test(failure?.error?.message || ''))
+      return extractMenu(files, key, model, fetcher, false);
     throw new ApiError(
       502,
       'Gemini rejected the menu-reader request (HTTP 400). Check the configured model and reader settings.',
@@ -134,6 +142,11 @@ export async function extractMenu(
       }[];
     };
     const candidate = data.candidates?.[0];
+    if (candidate?.finishReason === 'MAX_TOKENS')
+      throw new ApiError(
+        502,
+        'The menu reader reached its response limit. Try uploading smaller sections of the menu separately. Nothing has been saved.',
+      );
     if (candidate?.finishReason !== 'STOP') throw new Error('Incomplete response');
     const text =
       candidate.content?.parts

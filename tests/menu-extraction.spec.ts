@@ -57,7 +57,13 @@ test('reader sends multiple images/PDFs, uses bounded JSON mode and preserves un
   expect(payload.generationConfig.responseMimeType).toBe('application/json');
   expect(payload.generationConfig.thinkingConfig).toBeUndefined();
   expect(payload.generationConfig.maxOutputTokens).toBe(32768);
-  expect(payload.generationConfig.responseJsonSchema).toBeUndefined();
+  const schema = payload.generationConfig.responseJsonSchema;
+  expect(schema.required).toEqual(['items', 'warnings']);
+  expect(schema.properties.items.maxItems).toBe(200);
+  expect(schema.properties.items.items.required).toEqual([
+    'name', 'category', 'description', 'price', 'vegetarian', 'note',
+  ]);
+  expect(schema.$schema).toBeUndefined();
   expect(payload.generationConfig.responseSchema).toBeUndefined();
   expect(payload.generationConfig.responseFormat).toBeUndefined();
 });
@@ -100,6 +106,26 @@ test('reader returns useful quota, key and connection errors without revealing u
       throw new Error('secret');
     }),
   ).rejects.toThrow('could not connect');
+});
+
+test('reader explains response truncation without returning a partial menu', async () => {
+  await expect(
+    extractMenu([], 'test-key', undefined, async () => response(draft, 'MAX_TOKENS')),
+  ).rejects.toThrow('reached its response limit');
+});
+
+test('reader falls back once when the provider rejects schema settings', async () => {
+  const requests: any[] = [];
+  const result = await extractMenu([], 'test-key', undefined, async (_, options) => {
+    requests.push(JSON.parse(options!.body as string));
+    return requests.length === 1
+      ? Response.json({ error: { message: 'responseJsonSchema is unsupported' } }, { status: 400 })
+      : response();
+  });
+  expect(result).toEqual(draft);
+  expect(requests).toHaveLength(2);
+  expect(requests[0].generationConfig.responseJsonSchema).toBeDefined();
+  expect(requests[1].generationConfig.responseJsonSchema).toBeUndefined();
 });
 
 test('reader preserves legacy settings only for 2.5 Flash overrides', async () => {
