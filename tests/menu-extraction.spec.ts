@@ -30,7 +30,7 @@ const response = (value: unknown = draft, finishReason = 'STOP') =>
     }),
   );
 
-test('reader sends multiple images/PDFs, uses structured output and preserves uncertain prices', async () => {
+test('reader sends multiple images/PDFs, uses bounded JSON mode and preserves uncertain prices', async () => {
   let payload: Record<string, any> = {};
   const fakeFetch: typeof fetch = async (input, options) => {
     expect(String(input)).toBe(
@@ -56,7 +56,10 @@ test('reader sends multiple images/PDFs, uses structured output and preserves un
   ]);
   expect(payload.generationConfig.responseMimeType).toBe('application/json');
   expect(payload.generationConfig.thinkingConfig).toBeUndefined();
-  expect(payload.generationConfig.responseJsonSchema.properties.items.maxItems).toBe(200);
+  expect(payload.generationConfig.maxOutputTokens).toBe(32768);
+  expect(payload.generationConfig.responseJsonSchema).toBeUndefined();
+  expect(payload.generationConfig.responseSchema).toBeUndefined();
+  expect(payload.generationConfig.responseFormat).toBeUndefined();
 });
 
 test('reader rejects truncated, invalid, empty and out-of-range drafts without returning partial dishes', async () => {
@@ -64,6 +67,8 @@ test('reader rejects truncated, invalid, empty and out-of-range drafts without r
     response(draft, 'MAX_TOKENS'),
     response({ ...draft, items: [] }),
     response({ ...draft, items: [{ ...draft.items[0], price: -10 }] }),
+    response({ ...draft, items: Array(201).fill(draft.items[0]) }),
+    response({ ...draft, items: [{ name: 'Missing fields', price: 120 }] }),
     new Response(
       JSON.stringify({
         candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '{broken' }] } }],

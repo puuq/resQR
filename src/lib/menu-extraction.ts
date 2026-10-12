@@ -1,5 +1,4 @@
 import { Buffer } from 'node:buffer';
-import { z } from 'zod';
 import { ApiError } from './api';
 import { menuExtraction, MENU_ITEM_LIMIT } from './menu-import';
 
@@ -26,7 +25,12 @@ Exclude taxes, service charges, contact information and branding from dishes. No
 ambiguities in warnings. Remove exact repeats across overlapping photos, keeping variants.
 Return at most ${MENU_ITEM_LIMIT} items. If the menu exceeds this, warn that some items were omitted.
 Never imply completeness when pages are unreadable. Use empty strings for absent descriptions/notes.
-For non-menu or unreadable pages return no items and explain in warnings.`;
+For non-menu or unreadable pages return no items and explain in warnings.
+Return only a JSON object with this exact structure:
+{"items":[{"name":"Dish name","category":"Category","description":"","price":120.5,"vegetarian":null,"note":""}],"warnings":[]}.
+Every item must include all six fields. price is a number or null; vegetarian is true, false,
+or null. warnings is a list of strings. Names are at most 100 characters, categories 60,
+descriptions and notes 400. Return no more than 20 warnings, each at most 500 characters.`;
 
 // Direct HTTP keeps this compatible with Workers without an AI SDK or PDF renderer.
 export async function extractMenu(
@@ -62,7 +66,6 @@ export async function extractMenu(
             },
           ],
           generationConfig: {
-            temperature: 0,
             maxOutputTokens: 32768,
             // Gemini 3 uses thinking levels, not the legacy 2.5 zero-token budget.
             // Use its model default (minimal for 3.5 Flash-Lite).
@@ -70,7 +73,8 @@ export async function extractMenu(
               ? { thinkingConfig: { thinkingBudget: 0 } }
               : {}),
             responseMimeType: 'application/json',
-            responseJsonSchema: z.toJSONSchema(menuExtraction),
+            // Plain JSON mode accepts this project's API request. The returned object
+            // still passes the full local schema below before it can reach the draft UI.
           },
         }),
       },
@@ -109,7 +113,7 @@ export async function extractMenu(
       );
     throw new ApiError(
       502,
-      'Gemini rejected the menu-reader request (HTTP 400). Check the configured model and reader settings; this does not mean your menu photo is blurry.',
+      'Gemini rejected the menu-reader request (HTTP 400). Check the configured model and reader settings.',
     );
   }
   if (response.status === 402)
