@@ -15,6 +15,8 @@ import { api, brandStyle, money, sharedGuestKey } from '@/lib/client';
 import type { PublicMenu, ServiceRequest } from '@/lib/types';
 import { ErrorBox, Loading } from './ui';
 import { MenuAdvertisement, MenuPromotions } from './menu-promotions';
+// Temporarily disabled until the apps and sponsor content are ready. Keep both layouts for later.
+const SHOW_MENU_SPONSORS = false;
 export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?: string }) {
   const [data, setData] = useState<PublicMenu | null>(null);
   const [error, setError] = useState('');
@@ -140,7 +142,8 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
         tabIndex={0}
         aria-label={`${r.name} menu`}
         onScroll={(event) => {
-          if (!adDismissed && event.currentTarget.scrollTop > 24) setAdDismissed(true);
+          if (SHOW_MENU_SPONSORS && !adDismissed && event.currentTarget.scrollTop > 24)
+            setAdDismissed(true);
         }}
       >
         <div className="customer-container">
@@ -182,7 +185,7 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                 </a>
               )}
             </div>
-            <MenuPromotions />
+            {SHOW_MENU_SPONSORS && <MenuPromotions />}
             <label className="search-field customer-search">
               <Search size={18} />
               <input
@@ -218,7 +221,11 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
             ) : (
               <div className="customer-items">
                 {[...groups].map(([name, categoryItems]) => (
-                  <section className="customer-category" key={name} aria-label={`${name} menu items`}>
+                  <section
+                    className="customer-category"
+                    key={name}
+                    aria-label={`${name} menu items`}
+                  >
                     <h2 className="customer-category-title">{name}</h2>
                     <div className="customer-category-items">
                       {categoryItems.map((item) => (
@@ -231,7 +238,11 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                               <div className="dish-name">
                                 <h3>{item.name}</h3>
                                 {!!item.vegetarian && (
-                                  <span className="dish-diet" title="Vegetarian" aria-label="Vegetarian">
+                                  <span
+                                    className="dish-diet"
+                                    title="Vegetarian"
+                                    aria-label="Vegetarian"
+                                  >
                                     <Leaf size={12} aria-hidden="true" /> Veg
                                   </span>
                                 )}
@@ -241,12 +252,19 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                             {(item.image || item.description) && (
                               <div className="dish-details">
                                 {item.image && (
-                                  <img className="dish-image" src={item.image} alt={item.name} loading="lazy" />
+                                  <img
+                                    className="dish-image"
+                                    src={item.image}
+                                    alt={item.name}
+                                    loading="lazy"
+                                  />
                                 )}
                                 {item.description && <p>{item.description}</p>}
                               </div>
                             )}
-                            {!item.available && <span className="sold-out-label">Sold out today</span>}
+                            {!item.available && (
+                              <span className="sold-out-label">Sold out today</span>
+                            )}
                           </div>
                         </article>
                       ))}
@@ -269,17 +287,19 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
           </footer>
         </div>
       </main>
-      <div
-        className={`customer-ad-rail ${adDismissed ? 'is-dismissed' : ''}`}
-        aria-hidden={adDismissed}
-        inert={adDismissed}
-      >
-        <div className="customer-ad-clip">
-          <div className="customer-ad-inner">
-            <MenuAdvertisement restaurant={r} />
+      {SHOW_MENU_SPONSORS && (
+        <div
+          className={`customer-ad-rail ${adDismissed ? 'is-dismissed' : ''}`}
+          aria-hidden={adDismissed}
+          inert={adDismissed}
+        >
+          <div className="customer-ad-clip">
+            <div className="customer-ad-inner">
+              <MenuAdvertisement restaurant={r} />
+            </div>
           </div>
         </div>
-      </div>
+      )}
       {tableToken && (
         <div className="call-dock">
           <div className="call-dock-inner">

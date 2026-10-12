@@ -292,7 +292,7 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   });
   await ownerContext.close();
   await owner.dispose();
-  // The advertisement has its own initial strip above the waiter bar, outside the menu.
+  // Sponsor settings remain saved while customer promotions/ads are temporarily disabled.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/t/${w.tables[0].token}`);
   const menuHeading = page.getByRole('heading', { name: 'Menu', exact: true, level: 1 });
@@ -326,43 +326,28 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: '.local/customer-review-dark.png' });
   const projects = page.getByRole('complementary', { name: 'Our projects' });
-  await expect(projects).toBeInViewport();
-  await expect(projects.getByRole('link', { name: /resQR/ })).toHaveAttribute('href', '/');
-  await expect(projects.getByText('Splitr', { exact: true })).toBeVisible();
-  await expect(projects.getByText('Coming soon', { exact: true })).toBeVisible();
+  await expect(projects).toHaveCount(0);
   const advertisement = page.getByRole('complementary', { name: 'Advertisement', exact: true });
-  await expect(advertisement).toHaveCount(1);
-  await expect(advertisement).toBeInViewport();
-  await expect(advertisement.getByText('Local sponsor', { exact: true })).toBeVisible();
+  await expect(advertisement).toHaveCount(0);
+  await expect(page.locator('.customer-ad-rail')).toHaveCount(0);
   const menuScroll = page.getByRole('main', { name: 'Juniper Coffee House menu', exact: true });
-  await expect(
-    menuScroll.getByRole('complementary', { name: 'Advertisement', exact: true }),
-  ).toHaveCount(0);
   for (const width of [320, 390, 1440]) {
     await page.setViewportSize({ width, height: 844 });
-    await expect(advertisement).toBeInViewport();
     const scrollBox = (await menuScroll.boundingBox())!;
-    const railBox = (await page.locator('.customer-ad-rail').boundingBox())!;
     const dockBox = (await page.locator('.call-dock').boundingBox())!;
-    expect(scrollBox.y + scrollBox.height).toBeLessThanOrEqual(railBox.y + 1);
-    expect(railBox.y + railBox.height).toBeCloseTo(dockBox.y, 0);
+    expect(scrollBox.y + scrollBox.height).toBeCloseTo(dockBox.y, 0);
     expect(dockBox.y + dockBox.height).toBeCloseTo(844, 0);
   }
   await page.setViewportSize({ width: 390, height: 844 });
   const lastDish = page.locator('.customer-item').last();
   expect((await menuHeading.boundingBox())!.y).toBeLessThan(150);
-  await page.screenshot({ path: '.local/customer-ad-initial-dark.png' });
+  await page.screenshot({ path: '.local/customer-sponsors-hidden-dark.png' });
   await lastDish.scrollIntoViewIfNeeded();
-  await expect(advertisement).not.toBeVisible();
-  await expect
-    .poll(async () => (await page.locator('.customer-ad-rail').boundingBox())!.height)
-    .toBeLessThan(1);
   await expect(lastDish).toBeInViewport();
   await menuScroll.evaluate((element) => element.scrollTo(0, 600));
-  await expect(projects).not.toBeInViewport();
   await expect(reviewLink).not.toBeInViewport();
   await expect(page.getByRole('button', { name: 'Call waiter', exact: true })).toBeInViewport();
-  await page.screenshot({ path: '.local/customer-ad-scrolled-dark.png' });
+  await page.screenshot({ path: '.local/customer-sponsors-hidden-scrolled-dark.png' });
   // Restore the light menu for the customer screenshot.
   expect(
     (
@@ -433,11 +418,10 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await expect(page.getByRole('heading', { name: 'Menu', exact: true, level: 1 })).toBeVisible();
   await expect(reviewLink).toHaveCount(0);
   const emptyAd = page.getByRole('complementary', { name: 'Advertisement', exact: true });
-  await expect(emptyAd).toHaveCount(1);
-  await expect(emptyAd.locator('img')).toHaveCount(0);
+  await expect(emptyAd).toHaveCount(0);
   await page.getByRole('textbox', { name: 'Search food and drinks' }).fill('no matching dish');
   await expect(page.getByRole('heading', { name: 'Nothing matches just yet.' })).toBeVisible();
-  await expect(emptyAd).toHaveCount(1);
+  await expect(emptyAd).toHaveCount(0);
   await page.getByRole('textbox', { name: 'Search food and drinks' }).fill('');
   await page.getByRole('button', { name: 'Call waiter' }).click();
   await expect(page.getByText('Request sent', { exact: true })).toBeVisible();

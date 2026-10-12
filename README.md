@@ -13,7 +13,7 @@ The setup form validates contact details, preserves inputs on failure and confir
 - Cookie sessions, server-side role/restaurant checks, parameterized SQL, atomic duplicate-call protection.
 - Locally bundled fonts. No advertising trackers, payment flows or third-party ad network.
 
-On customer menus, the advertisement occupies a separate compact strip above the waiter bar when the page opens. It slides away after the customer starts scrolling, giving the menu more room; it does not reappear during that visit. The menu and advertisement never overlap, and the waiter button stays available. The resQR/Splitr promotion strip remains near the menu heading.
+Customer menus temporarily hide the resQR/Splitr promotion strip and advertisement area until the apps and sponsor content are ready. No blank space is reserved above the waiter bar. Their layouts and saved sponsor settings are retained; `SHOW_MENU_SPONSORS` in `CustomerMenu` can restore both areas for a future launch.
 
 ## Develop locally
 
@@ -118,7 +118,7 @@ The customer menu groups dishes under one heading per category and uses compact 
 - Restaurant setup, menu management, logo upload, staff creation, QR generation and static/animated image sponsor placement are implemented. Custom restaurant domains, hostname routing/redirect management, QR revocation, self-service password recovery and a native waiter app are future work.
 - Printed QRs use `QR_BASE_URL` and a stable random table token. Keep that hostname serving the app (or add redirects later). Changing the variable cannot rewrite printed cards.
 - Use real menu data before deployment at a venue. Confirm prices, availability, allergy information and Wi-Fi QR compatibility on the actual phones.
-- Customer menus have a compact, scrolling resQR + Splitr promotion below the Menu heading (Splitr is marked Coming soon), separate from an Advertisement area after the first four visible dishes. The ad area reserves a small empty space until an image is configured; existing restaurant ad image/title/HTTPS destination settings fill it. No ad network, tracking, automatic revenue or impression/click billing is connected yet.
+- Customer promotions and advertisements are temporarily hidden. Saved restaurant ad image/title/HTTPS destination settings are preserved for later. No ad network, tracking, automatic revenue or impression/click billing is connected yet.
 - R2 Standard and Workers have usage-based pricing beyond included allowances. No paid plan change is performed by this project.
 
 ## Key paths
