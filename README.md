@@ -107,6 +107,8 @@ Only the platform administrator can **Delete restaurant** under Brand & settings
 
 Admin and owners can set an optional **Google review link** in restaurant settings (Google Business Profile → Read reviews → Get more reviews). A compact, nonsticky **Review on Google** button appears beside the customer Menu heading and opens that restaurant's link in a new tab. Leaving the field empty hides it. Google links are validated on the server; the `0003_google_review_link.sql` migration preserves existing restaurants with an empty default. resQR does not collect review ratings or verify whether a customer posted a review.
 
+The customer menu groups dishes under one heading per category and uses compact rows with the price beside the dish name. Descriptions, vegetarian labels, photos and sold-out status remain visible. Search and category filters show only matching groups while preserving the restaurant's item order within each category.
+
 ## Pilot limits and next steps
 
 - Keep the staff queue open, the device awake and sound enabled. Background/locked-phone notifications and native apps are not implemented. Internet is required; a failed POST never displays a successful send.

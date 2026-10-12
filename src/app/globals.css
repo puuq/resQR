@@ -2039,18 +2039,37 @@ form > small {
 }
 .customer-items {
   display: grid;
+  gap: 22px;
+}
+.customer-category-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 9px;
+}
+.customer-category-items {
+  display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 13px;
+  column-gap: 24px;
+  padding: 0 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
 .customer-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 13px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 20px;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 0;
+}
+.customer-item:last-child {
+  border-bottom: 0;
+}
+@media (min-width: 801px) {
+  .customer-item:nth-last-child(2):nth-child(odd) {
+    border-bottom: 0;
+  }
 }
 .customer-item.sold-out {
   opacity: 0.58;
@@ -2059,52 +2078,73 @@ form > small {
   flex: 1;
   min-width: 0;
 }
-.dish-category {
-  font-size: 8px;
-  color: var(--muted);
+.dish-heading {
   display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 9px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
-.dish-category > span {
+.dish-name {
+  min-width: 0;
   display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+}
+.dish-diet {
+  display: inline-flex;
   align-items: center;
   gap: 3px;
-  color: #709554;
+  font-size: 10px;
+  color: #59733f;
+  white-space: nowrap;
+}
+.dark .dish-diet {
+  color: #b4c9a1;
 }
 .customer-item h3 {
   font-size: 15px;
   font-weight: 700;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 .customer-item p {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
-  line-height: 1.8;
-  margin-top: 8px;
+  line-height: 1.5;
+  margin: 0;
 }
-.dish-bottom {
+.dish-details {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 15px;
-  flex-wrap: wrap;
+  margin-top: 4px;
 }
-.dish-bottom strong {
-  font-size: 12px;
+.dish-details p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dish-price {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 14px;
   color: var(--brand-button);
 }
 .sold-out-label {
-  font-size: 8px;
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 10px;
   background: #f1ede6;
   color: #a39480;
   padding: 3px 5px;
   border-radius: 4px;
 }
 .dish-image {
-  width: 75px;
-  height: 85px;
-  border-radius: 9px;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 7px;
 }
 .menu-footnote {
   font-size: 9px;
@@ -2197,7 +2237,7 @@ form > small {
   text-align: center;
   padding: 20px;
 }
-.dark .dish-bottom strong,
+.dark .dish-price,
 .dark .menu-ad-space a {
   color: #c4d7af;
 }
@@ -2560,7 +2600,7 @@ form > small {
   .customer-ad-inner {
     max-width: 650px;
   }
-  .customer-items {
+  .customer-category-items {
     grid-template-columns: 1fr;
   }
   .customer-top {
@@ -2784,9 +2824,6 @@ form > small {
   .customer-section-title h1 {
     font-size: 19px;
   }
-  .customer-item {
-    padding: 19px 16px;
-  }
   .customer-item h3 {
     font-size: 15px;
   }
@@ -2833,14 +2870,8 @@ form > small {
 .customer-item p {
   font-size: 13px;
 }
-.dish-category {
-  font-size: 10px;
-}
-.dish-bottom strong {
-  font-size: 14px;
-}
 .customer-item h3 {
-  font-size: 17px;
+  font-size: 15px;
 }
 .category-tabs button {
   font-size: 12px;

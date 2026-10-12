@@ -349,15 +349,15 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
     expect(dockBox.y + dockBox.height).toBeCloseTo(844, 0);
   }
   await page.setViewportSize({ width: 390, height: 844 });
-  const fourthDish = page.locator('.customer-item').nth(3);
+  const lastDish = page.locator('.customer-item').last();
   expect((await menuHeading.boundingBox())!.y).toBeLessThan(150);
   await page.screenshot({ path: '.local/customer-ad-initial-dark.png' });
-  await fourthDish.scrollIntoViewIfNeeded();
+  await lastDish.scrollIntoViewIfNeeded();
   await expect(advertisement).not.toBeVisible();
   await expect
     .poll(async () => (await page.locator('.customer-ad-rail').boundingBox())!.height)
     .toBeLessThan(1);
-  await expect(fourthDish).toBeInViewport();
+  await expect(lastDish).toBeInViewport();
   await menuScroll.evaluate((element) => element.scrollTo(0, 600));
   await expect(projects).not.toBeInViewport();
   await expect(reviewLink).not.toBeInViewport();

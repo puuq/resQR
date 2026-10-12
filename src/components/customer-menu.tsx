@@ -123,6 +123,12 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
       (category === 'All' || i.category === category) &&
       `${i.name} ${i.description}`.toLowerCase().includes(search.toLowerCase()),
   );
+  const groups = new Map<string, typeof items>();
+  for (const item of items) {
+    const group = groups.get(item.category);
+    if (group) group.push(item);
+    else groups.set(item.category, [item]);
+  }
   const active = !!call && call.status !== 'completed';
   return (
     <div
@@ -211,32 +217,41 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
               </div>
             ) : (
               <div className="customer-items">
-                {items.map((item) => (
-                  <article
-                    key={item.id}
-                    className={`customer-item ${!item.available ? 'sold-out' : ''}`}
-                  >
-                    <div className="customer-item-body">
-                      <div className="dish-category">
-                        {item.category}
-                        {!!item.vegetarian && (
-                          <span title="Vegetarian">
-                            <Leaf size={12} />
-                            Veg
-                          </span>
-                        )}
-                      </div>
-                      <h3>{item.name}</h3>
-                      {item.description && <p>{item.description}</p>}
-                      <div className="dish-bottom">
-                        <strong>{money(item.price)}</strong>
-                        {!item.available && <span className="sold-out-label">Sold out today</span>}
-                      </div>
+                {[...groups].map(([name, categoryItems]) => (
+                  <section className="customer-category" key={name} aria-label={`${name} menu items`}>
+                    <h2 className="customer-category-title">{name}</h2>
+                    <div className="customer-category-items">
+                      {categoryItems.map((item) => (
+                        <article
+                          key={item.id}
+                          className={`customer-item ${!item.available ? 'sold-out' : ''}`}
+                        >
+                          <div className="customer-item-body">
+                            <div className="dish-heading">
+                              <div className="dish-name">
+                                <h3>{item.name}</h3>
+                                {!!item.vegetarian && (
+                                  <span className="dish-diet" title="Vegetarian" aria-label="Vegetarian">
+                                    <Leaf size={12} aria-hidden="true" /> Veg
+                                  </span>
+                                )}
+                              </div>
+                              <strong className="dish-price">{money(item.price)}</strong>
+                            </div>
+                            {(item.image || item.description) && (
+                              <div className="dish-details">
+                                {item.image && (
+                                  <img className="dish-image" src={item.image} alt={item.name} loading="lazy" />
+                                )}
+                                {item.description && <p>{item.description}</p>}
+                              </div>
+                            )}
+                            {!item.available && <span className="sold-out-label">Sold out today</span>}
+                          </div>
+                        </article>
+                      ))}
                     </div>
-                    {item.image && (
-                      <img className="dish-image" src={item.image} alt={item.name} loading="lazy" />
-                    )}
-                  </article>
+                  </section>
                 ))}
               </div>
             )}
