@@ -73,7 +73,6 @@ test('reader rejects truncated, invalid, empty and out-of-range drafts without r
     response(draft, 'MAX_TOKENS'),
     response({ ...draft, items: [] }),
     response({ ...draft, items: [{ ...draft.items[0], price: -10 }] }),
-    response({ ...draft, items: Array(201).fill(draft.items[0]) }),
     response({ ...draft, items: [{ name: 'Missing fields', price: 120 }] }),
     new Response(
       JSON.stringify({
@@ -84,6 +83,15 @@ test('reader rejects truncated, invalid, empty and out-of-range drafts without r
   ]) {
     await expect(extractMenu([], 'test-key', undefined, async () => upstream)).rejects.toThrow();
   }
+});
+
+test('reader flags omitted variants above the draft limit and defaults only absent optional details', async () => {
+  const result = await extractMenu([], 'test-key', undefined, async () => response({
+    items: Array(201).fill({ name: 'Rum 60ML', category: 'Rum', price: 290 }),
+  }));
+  expect(result.items).toHaveLength(200);
+  expect(result.items[0]).toEqual({ name: 'Rum 60ML', category: 'Rum', price: 290, description: '', vegetarian: null, note: '' });
+  expect(result.warnings[0]).toContain('Only the first 200');
 });
 
 test('reader returns useful quota, key and connection errors without revealing upstream details', async () => {

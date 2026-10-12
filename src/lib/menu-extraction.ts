@@ -153,12 +153,34 @@ export async function extractMenu(
         ?.filter((part) => !part.thought)
         .map((part) => part.text || '')
         .join('') || '';
-    const result = menuExtraction.parse(JSON.parse(text));
+    const raw = JSON.parse(text);
+    // Absent optional menu details carry no factual claim. Required names,
+    // categories and prices still pass the full validator without coercion.
+    if (raw && Array.isArray(raw.items)) {
+      raw.items = raw.items.map((item: unknown) =>
+        item && typeof item === 'object'
+          ? { description: '', vegetarian: null, note: '', ...item }
+          : item,
+      );
+      if (raw.warnings === undefined) raw.warnings = [];
+      if (raw.items.length > MENU_ITEM_LIMIT && Array.isArray(raw.warnings)) {
+        raw.items = raw.items.slice(0, MENU_ITEM_LIMIT);
+        raw.warnings = [
+          `This menu exceeds ${MENU_ITEM_LIMIT} entries when sizes are listed separately. Only the first ${MENU_ITEM_LIMIT} entries are included; review the remaining menu separately.`,
+          ...raw.warnings.slice(0, 19),
+        ];
+      }
+    }
+    const result = menuExtraction.parse(raw);
     if (!result.items.length)
       throw new ApiError(422, 'No dishes could be read. Try clearer menu photos or another PDF.');
     return result;
   } catch (error) {
     if (error instanceof ApiError) throw error;
+    // Log structural diagnostics only, never menu contents or provider text.
+    console.warn('Menu draft validation failed', error instanceof z.ZodError
+      ? error.issues.map(({ code, path }) => ({ code, path }))
+      : { kind: error instanceof SyntaxError ? 'invalid_json' : 'incomplete_response' });
     throw new ApiError(
       502,
       'The menu reader returned an incomplete or invalid draft. Try fewer pages. Nothing has been saved.',
