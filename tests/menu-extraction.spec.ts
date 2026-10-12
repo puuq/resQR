@@ -34,7 +34,7 @@ test('reader sends multiple images/PDFs, uses structured output and preserves un
   let payload: Record<string, any> = {};
   const fakeFetch: typeof fetch = async (input, options) => {
     expect(String(input)).toBe(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
     );
     expect(new Headers(options?.headers).get('x-goog-api-key')).toBe('test-key');
     payload = JSON.parse(options!.body as string);
@@ -55,6 +55,7 @@ test('reader sends multiple images/PDFs, uses structured output and preserves un
     'image/jpeg',
   ]);
   expect(payload.generationConfig.responseMimeType).toBe('application/json');
+  expect(payload.generationConfig.thinkingConfig).toBeUndefined();
   expect(payload.generationConfig.responseJsonSchema.properties.items.maxItems).toBe(200);
 });
 
@@ -94,6 +95,50 @@ test('reader returns useful quota, key and connection errors without revealing u
       throw new Error('secret');
     }),
   ).rejects.toThrow('could not connect');
+});
+
+test('reader preserves legacy settings only for 2.5 Flash overrides', async () => {
+  let settings: Record<string, unknown> = {};
+  await extractMenu([], 'test-key', 'gemini-2.5-flash', async (_, options) => {
+    settings = JSON.parse(options!.body as string).generationConfig;
+    return response();
+  });
+  expect(settings.thinkingConfig).toEqual({ thinkingBudget: 0 });
+});
+
+test('reader distinguishes rejected keys, model access, settings and paid credits without exposing provider text', async () => {
+  for (const [status, details, expected] of [
+    [
+      400,
+      { error: { message: 'upstream-secret', details: [{ reason: 'API_KEY_INVALID' }] } },
+      'rejected the API key',
+    ],
+    [
+      400,
+      { error: { message: 'API key expired. Please renew the API key.' } },
+      'rejected the API key',
+    ],
+    [400, { error: { message: 'Invalid response schema. upstream-secret' } }, 'HTTP 400'],
+    [404, { error: { message: 'upstream-secret' } }, 'model is unavailable'],
+    [402, { error: { message: 'upstream-secret' } }, 'Free Tier project'],
+  ] as const) {
+    try {
+      await extractMenu(
+        [],
+        'test-key',
+        undefined,
+        async () => new Response(JSON.stringify(details), { status }),
+      );
+      throw new Error('Expected reader failure');
+    } catch (error) {
+      expect((error as Error).message).toContain(expected);
+      expect((error as Error).message).not.toContain('upstream-secret');
+      expect((error as Error).message).not.toContain('test-key');
+    }
+  }
+  await expect(
+    extractMenu([], 'test-key', undefined, async () => new Response('not JSON', { status: 400 })),
+  ).rejects.toThrow('HTTP 400');
 });
 
 test('upload checks reject unsupported, oversized and excess files and verify file signatures', () => {

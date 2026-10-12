@@ -32,7 +32,7 @@ For non-menu or unreadable pages return no items and explain in warnings.`;
 export async function extractMenu(
   files: { mimeType: string; bytes: Uint8Array }[],
   key: string,
-  model = 'gemini-2.5-flash',
+  model = 'gemini-3.5-flash-lite',
   fetcher: typeof fetch = fetch,
 ) {
   if (!/^[a-z0-9.-]+$/.test(model))
@@ -64,7 +64,11 @@ export async function extractMenu(
           generationConfig: {
             temperature: 0,
             maxOutputTokens: 32768,
-            thinkingConfig: { thinkingBudget: 0 },
+            // Gemini 3 uses thinking levels, not the legacy 2.5 zero-token budget.
+            // Use its model default (minimal for 3.5 Flash-Lite).
+            ...(/^gemini-2\.5-flash(?:-lite)?$/.test(model)
+              ? { thinkingConfig: { thinkingBudget: 0 } }
+              : {}),
             responseMimeType: 'application/json',
             responseJsonSchema: z.toJSONSchema(menuExtraction),
           },
@@ -84,6 +88,35 @@ export async function extractMenu(
     );
   if ([401, 403].includes(response.status))
     throw new ApiError(503, 'The menu reader key needs checking in Cloudflare settings.');
+  if (response.status === 404)
+    throw new ApiError(
+      503,
+      'The configured Gemini model is unavailable for this project. Check MENU_IMPORT_MODEL; new projects need a current model such as gemini-3.5-flash-lite.',
+    );
+  if (response.status === 400) {
+    // Read only to classify the failure; never return/log upstream text, keys or documents.
+    const failure = (await response.json().catch(() => null)) as {
+      error?: { message?: string; details?: { reason?: string }[] };
+    } | null;
+    const reasons = failure?.error?.details?.map((detail) => detail.reason || '') || [];
+    if (
+      reasons.some((reason) => ['API_KEY_INVALID', 'API_KEY_EXPIRED'].includes(reason)) ||
+      /api key (?:not valid|invalid|expired)/i.test(failure?.error?.message || '')
+    )
+      throw new ApiError(
+        503,
+        'Gemini rejected the API key. Copy the key value from AI Studio into the GEMINI_API_KEY Worker secret and deploy it.',
+      );
+    throw new ApiError(
+      502,
+      'Gemini rejected the menu-reader request (HTTP 400). Check the configured model and reader settings; this does not mean your menu photo is blurry.',
+    );
+  }
+  if (response.status === 402)
+    throw new ApiError(
+      503,
+      'This Gemini project requires paid credits. To keep imports free, use an API key from a Free Tier project with an available model quota.',
+    );
   if (!response.ok)
     throw new ApiError(
       502,
