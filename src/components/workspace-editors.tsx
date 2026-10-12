@@ -296,6 +296,7 @@ function MenuForm({
   );
 }
 export function TableEditor({ workspace, refresh }: Props) {
+  const tableCount = workspace.tables.filter((table) => !table.is_shared).length;
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -343,9 +344,12 @@ export function TableEditor({ workspace, refresh }: Props) {
       <div className="section-toolbar">
         <div>
           <h2>
-            Connected tables <span className="count-pill">{workspace.tables.length}</span>
+            Tables & QR{' '}
+            <span className="count-pill">
+              {tableCount ? `${tableCount} tables + shared QR` : 'Shared QR only'}
+            </span>
           </h2>
-          <p>Each code is unique to its table. Menu changes won’t affect it.</p>
+          <p>Use individual QRs for named tables, or the shared QR for any unnumbered table.</p>
         </div>
         <div className="toolbar-actions">
           <a
@@ -365,41 +369,49 @@ export function TableEditor({ workspace, refresh }: Props) {
       </div>
       <ErrorBox message={error} />
       <div className="table-grid">
-        {workspace.tables.map((t) => (
-          <article className="table-card" key={t.id}>
-            <div className="table-card-top">
-              <QrCode size={26} />
-              <button
-                className="icon-button"
-                onClick={() => setRename({ id: t.id, label: t.label })}
-                aria-label={`Rename ${t.label}`}
-              >
-                <Edit3 size={15} />
-              </button>
-            </div>
-            <h3>{t.label}</h3>
-            <span className="muted">Menu & waiter call</span>
-            <div className="table-card-actions">
-              <a className="text-link" href={`/t/${t.token}`} target="_blank" rel="noreferrer">
-                Open menu
-                <ArrowUpRight size={15} />
-              </a>
-              <button
-                className="icon-button"
-                aria-label={`Download QR for ${t.label}`}
-                onClick={() => void download(t.token, t.label)}
-              >
-                <Download size={18} />
-              </button>
-            </div>
-          </article>
-        ))}
+        {[...workspace.tables]
+          .sort((a, b) => b.is_shared - a.is_shared)
+          .map((t) => (
+            <article className="table-card" key={t.id}>
+              <div className="table-card-top">
+                <QrCode size={26} />
+                {!t.is_shared && (
+                  <button
+                    className="icon-button"
+                    onClick={() => setRename({ id: t.id, label: t.label })}
+                    aria-label={`Rename ${t.label}`}
+                  >
+                    <Edit3 size={15} />
+                  </button>
+                )}
+              </div>
+              <h3>{t.is_shared ? 'Shared QR' : t.label}</h3>
+              <span className="muted">
+                {t.is_shared
+                  ? 'For unnumbered tables · general waiter alerts'
+                  : 'Menu & waiter call'}
+              </span>
+              <div className="table-card-actions">
+                <a className="text-link" href={`/t/${t.token}`} target="_blank" rel="noreferrer">
+                  Open menu
+                  <ArrowUpRight size={15} />
+                </a>
+                <button
+                  className="icon-button"
+                  aria-label={`Download QR for ${t.is_shared ? 'Shared QR' : t.label}`}
+                  onClick={() => void download(t.token, t.is_shared ? 'Shared QR' : t.label)}
+                >
+                  <Download size={18} />
+                </button>
+              </div>
+            </article>
+          ))}
       </div>
       <div className="notice">
         <QrCode size={20} />
         <span>
-          Test your printed codes on a phone before placing them. Keep the QR domain active to
-          preserve existing cards.
+          The shared QR sends a general alert; staff won’t know the customer’s table. Print the same
+          shared code for unnumbered tables. Test all codes on a phone before placing them.
         </span>
       </div>
       {(adding || rename) && (
@@ -417,7 +429,7 @@ export function TableEditor({ workspace, refresh }: Props) {
                 name="label"
                 required
                 maxLength={40}
-                defaultValue={rename?.label || `Table ${workspace.tables.length + 1}`}
+                defaultValue={rename?.label || `Table ${tableCount + 1}`}
                 placeholder="e.g. Terrace 2"
               />
             </label>

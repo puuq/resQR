@@ -41,6 +41,7 @@ export interface DiningTable {
   label: string;
   token: string;
   created_at: number;
+  is_shared: number;
 }
 export interface ServiceRequest {
   id: string;
@@ -53,6 +54,7 @@ export interface ServiceRequest {
   assigned_to: string | null;
   table_label: string;
   staff_name: string | null;
+  is_shared: number;
 }
 export interface RestaurantSummary extends Restaurant {
   table_count: number;
@@ -69,6 +71,6 @@ export interface Workspace {
 export type PublicRestaurant = Omit<Restaurant, 'wifi_password' | 'wifi_ssid'>;
 export interface PublicMenu {
   restaurant: PublicRestaurant;
-  table: { label: string } | null;
+  table: { label: string; is_shared: number } | null;
   menu: MenuItem[];
 }

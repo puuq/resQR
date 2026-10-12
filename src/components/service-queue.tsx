@@ -221,9 +221,11 @@ export function ServiceQueue({ restaurantId, user }: { restaurantId: string; use
                 <h2>{call.table_label}</h2>
                 <p>
                   {call.status === 'pending'
-                    ? 'A guest would like your attention.'
+                    ? call.is_shared
+                      ? 'A guest needs assistance. No table number provided.'
+                      : 'A guest would like your attention.'
                     : call.status === 'acknowledged'
-                      ? `${call.staff_name || 'A staff member'} is taking care of this table.`
+                      ? `${call.staff_name || 'A staff member'} is taking care of ${call.is_shared ? 'this guest' : 'this table'}.`
                       : 'Another guest, well looked after.'}
                 </p>
               </div>

@@ -23,6 +23,24 @@ export async function api<T>(url: string, options: RequestInit = {}): Promise<T>
 }
 export const money = (paisa: number) =>
   `Rs. ${new Intl.NumberFormat('en-NP', { maximumFractionDigits: 2 }).format(paisa / 100)}`;
+export function sharedGuestKey(tableToken: string) {
+  const storageKey = `resqr-guest:${tableToken}`;
+  try {
+    const saved = localStorage.getItem(storageKey);
+    if (saved && /^[a-f0-9]{64}$/.test(saved)) return saved;
+  } catch {
+    /* Private browsers may disable storage; keep the generated key in component state. */
+  }
+  const value = Array.from(crypto.getRandomValues(new Uint8Array(32)), (byte) =>
+    byte.toString(16).padStart(2, '0'),
+  ).join('');
+  try {
+    localStorage.setItem(storageKey, value);
+  } catch {
+    /* Calls still work for this visit. */
+  }
+  return value;
+}
 export function elapsed(timestamp: number) {
   const seconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
   return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;

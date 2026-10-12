@@ -32,7 +32,9 @@ export const GET = handler(async (request) => {
   void wifi_password;
   return json({
     restaurant: publicRestaurant,
-    table: table ? { label: table.label } : null,
+    table: table
+      ? { label: table.is_shared ? 'Guest menu' : table.label, is_shared: table.is_shared }
+      : null,
     menu: menu.results,
   });
 });

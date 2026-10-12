@@ -66,7 +66,7 @@ export const restaurantInput = z.object({
   ad_image: image.default(''),
   ad_url: externalUrl.default(''),
   google_review_url: googleReviewUrl.default(''),
-  table_count: z.number().int().min(1).max(100).default(6),
+  table_count: z.number().int().min(0).max(100).default(0),
   sample_menu: z.boolean().default(false),
 });
 export const menuInput = z.object({

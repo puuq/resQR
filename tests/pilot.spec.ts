@@ -51,7 +51,8 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   expect(second.status()).toBe(201);
   const other = (await second.json()).id;
   const w = await (await admin.get(`/api/workspace?restaurant=${rid}`)).json();
-  expect(w.tables).toHaveLength(6);
+  expect(w.tables).toHaveLength(7);
+  expect(w.tables.filter((table: { is_shared: number }) => !table.is_shared)).toHaveLength(6);
   expect(w.menu).toHaveLength(8);
   const waiterCredentials = {
     email: `waiter-${suffix}@resqr.local`,
@@ -124,7 +125,7 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   expect(bulk.status()).toBe(201);
   const bulkId = (await bulk.json()).id;
   const bulkWorkspace = await (await admin.get(`/api/workspace?restaurant=${bulkId}`)).json();
-  expect(bulkWorkspace.tables).toHaveLength(100);
+  expect(bulkWorkspace.tables).toHaveLength(101);
   expect(bulkWorkspace.menu).toHaveLength(200);
   expect(bulkWorkspace.menu[0]).toMatchObject({ price: 12050, name: 'Dish 1', sort_order: 0 });
   expect(bulkWorkspace.menu[199]).toMatchObject({ name: 'Dish 200', sort_order: 199 });
@@ -276,6 +277,12 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await ownerPage.getByLabel('Google review link', { exact: true }).fill(ownerReviewUrl);
   await ownerPage.getByRole('button', { name: 'Save changes', exact: true }).click();
   await expect(ownerPage.getByText('Saved', { exact: true })).toBeVisible();
+  expect(
+    (await (await admin.get(`/api/workspace?restaurant=${rid}`)).json()).restaurant,
+  ).toMatchObject({
+    wifi_ssid: 'Juniper Guest',
+    wifi_password: 'a-demo-wifi-password',
+  });
   expect(
     (await (await guest.get(`/api/public?table=${w.tables[0].token}`)).json()).restaurant,
   ).toMatchObject({
@@ -657,7 +664,7 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await adminPage.screenshot({ path: '.local/setup-inbox.png', fullPage: true });
   await adminPage.goto(`/print?restaurant=${rid}`);
   await expect(adminPage.getByRole('button', { name: 'Print / Save PDF' })).toBeVisible();
-  expect(await adminPage.locator('.print-qr').count()).toBe(12);
+  expect(await adminPage.locator('.print-qr').count()).toBe(14);
   await adminPage.emulateMedia({ media: 'print' });
   await adminPage.pdf({
     path: '.local/sample-table-cards.pdf',

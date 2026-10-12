@@ -93,7 +93,7 @@ Tests mock provider responses without sending files to Google or consuming quota
 
 1. Sign in as platform admin and add a restaurant. Optionally start with the clearly labelled sample menu.
 2. Upload the logo, set the brand colour and menu appearance, and enter actual dishes/prices.
-3. Add the table count, then rename tables if needed. Optionally enter the **guest** Wi-Fi network details.
+3. Leave the table count blank for one shared QR, or enter a count for individual tables plus the shared QR. Rename individual tables if needed. Wi-Fi setup fields are no longer part of the form.
 4. Create an owner, receptionist or waiter account. Share access directly; the app does not send emails.
 5. Open the service queue on a counter device. Click **Enable sound** and verify the chime is audible.
 6. Open **Tables & QR** and print the two-sided cards, or download a QR PNG. Test with a phone before placing cards.
@@ -101,14 +101,18 @@ Tests mock provider responses without sending files to Google or consuming quota
 
 Admin can manage all restaurants. Owners manage their own menus, branding, tables and staff. Reception can handle all calls at its venue. Waiters claim requests and complete their own claimed requests. Sponsorship is controlled by the platform administrator.
 
+Every restaurant has a **Shared QR** in Tables & QR, including existing restaurants after `0004_shared_qr.sql`. Print the same code for tables without a number/name. Staff see **Guest request** and cannot identify the physical table from that alert. Each browser keeps a random restaurant-scoped guest token locally; only its hash is stored with calls. Shared calls are deduplicated and cooled down per guest, so another guest can call while the first is waiting. Customers see only their own shared-call status. Numbered-table QRs still deduplicate across all phones at that table. When browser storage is unavailable, the token lasts only for the current page visit. Existing numbered tokens/history are preserved by the migration. Up to 100 individual tables can coexist with the shared QR; the dashboard count excludes the shared code. Existing saved Wi-Fi settings are preserved when editing the simplified form.
+
+Only the platform administrator can **Delete restaurant** under Brand & settings. The confirmation requires its exact name. Deletion atomically removes that restaurant's menu items, QR records, calls and staff accounts; staff sessions are revoked and public menu/printed links stop working. Other restaurants and the platform account remain active. Deletion cannot be undone in the app. Previously uploaded R2 media is retained; media cleanup is separate so shared sponsor/restaurant images are not removed accidentally. No production restaurant should be deleted for a verification test.
+
 Admin and owners can set an optional **Google review link** in restaurant settings (Google Business Profile → Read reviews → Get more reviews). A compact, nonsticky **Review on Google** button appears beside the customer Menu heading and opens that restaurant's link in a new tab. Leaving the field empty hides it. Google links are validated on the server; the `0003_google_review_link.sql` migration preserves existing restaurants with an empty default. resQR does not collect review ratings or verify whether a customer posted a review.
 
 ## Pilot limits and next steps
 
 - Keep the staff queue open, the device awake and sound enabled. Background/locked-phone notifications and native apps are not implemented. Internet is required; a failed POST never displays a successful send.
 - Five-second polling is intended for a small pilot. A counter open for 12 hours produces roughly 8,640 polling requests. Monitor account-wide Workers/D1 limits before adding venues; add WebSocket/push delivery as the service grows.
-- One active call per table, a 30-second post-completion cooldown and server rate limits reduce repeat calls. A photographed/shared QR can be used remotely; the QR is not proof of presence.
-- Up to 100 tables at a venue. The service queue returns at most 200 recent/active records. The completed view covers the last 12 hours.
+- One active call per numbered table (or per guest on the shared QR), a 30-second post-completion cooldown and server rate limits reduce repeat calls. A photographed/shared QR can be used remotely; the QR is not proof of presence.
+- Up to 100 individual tables plus one shared QR at a venue. The service queue returns at most 200 recent/active records. The completed view covers the last 12 hours.
 - Restaurant setup, menu management, logo upload, staff creation, QR generation and static/animated image sponsor placement are implemented. Custom restaurant domains, hostname routing/redirect management, QR revocation, self-service password recovery and a native waiter app are future work.
 - Printed QRs use `QR_BASE_URL` and a stable random table token. Keep that hostname serving the app (or add redirects later). Changing the variable cannot rewrite printed cards.
 - Use real menu data before deployment at a venue. Confirm prices, availability, allergy information and Wi-Fi QR compatibility on the actual phones.

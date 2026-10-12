@@ -11,7 +11,7 @@ import {
   Star,
   UtensilsCrossed,
 } from 'lucide-react';
-import { api, brandStyle, money } from '@/lib/client';
+import { api, brandStyle, money, sharedGuestKey } from '@/lib/client';
 import type { PublicMenu, ServiceRequest } from '@/lib/types';
 import { ErrorBox, Loading } from './ui';
 import { MenuAdvertisement, MenuPromotions } from './menu-promotions';
@@ -24,29 +24,46 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
   const [category, setCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [adDismissed, setAdDismissed] = useState(false);
+  const [guestKey, setGuestKey] = useState('');
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
+    let active = true;
     setAdDismissed(false);
+    setData(null);
+    setCall(null);
+    setGuestKey('');
+    setCallError('');
+    setError('');
+    callRevision.current++;
     api<PublicMenu>(
       `/api/public?${tableToken ? `table=${tableToken}` : `slug=${encodeURIComponent(slug || '')}`}`,
     )
       .then((d) => {
-        if (mounted.current) setData(d);
+        if (active) {
+          setGuestKey(d.table?.is_shared && tableToken ? sharedGuestKey(tableToken) : '');
+          setData(d);
+        }
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => {
+        if (active) setError(e.message);
+      });
     return () => {
       mounted.current = false;
+      active = false;
     };
   }, [tableToken, slug]);
   const callRevision = useRef(0);
   const refreshInFlight = useRef(false);
   const refresh = useCallback(async () => {
-    if (!tableToken || refreshInFlight.current) return;
+    if (!tableToken || !data || (data.table?.is_shared && !guestKey) || refreshInFlight.current)
+      return;
     refreshInFlight.current = true;
     const revision = callRevision.current;
     try {
-      const result = await api<{ call: ServiceRequest | null }>(`/api/calls?table=${tableToken}`);
+      const result = await api<{ call: ServiceRequest | null }>(
+        `/api/calls?table=${tableToken}${data.table?.is_shared ? `&guest=${guestKey}` : ''}`,
+      );
       if (mounted.current && revision === callRevision.current) {
         setCall(result.call);
         setCallError('');
@@ -57,7 +74,7 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
     } finally {
       refreshInFlight.current = false;
     }
-  }, [tableToken]);
+  }, [tableToken, data, guestKey]);
   useEffect(() => {
     void refresh();
   }, [refresh]);
@@ -67,14 +84,17 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
     return () => clearInterval(timer);
   }, [tableToken, call?.status, refresh, !!call]);
   async function callWaiter() {
-    if (!tableToken) return;
+    if (!tableToken || !data || (data.table?.is_shared && !guestKey)) return;
     callRevision.current++;
     setBusy(true);
     setCallError('');
     try {
       const result = await api<{ call: ServiceRequest }>('/api/calls', {
         method: 'POST',
-        body: JSON.stringify({ token: tableToken }),
+        body: JSON.stringify({
+          token: tableToken,
+          ...(data.table?.is_shared ? { guest: guestKey } : {}),
+        }),
       });
       setCall(result.call);
     } catch (e) {
@@ -275,13 +295,15 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                       ? 'Thanks for your patience.'
                       : call?.status === 'completed'
                         ? 'You can call again when you need us.'
-                        : 'Ready to order, or need something else?'}
+                        : data.table?.is_shared
+                          ? 'General alert · let staff know where you’re seated.'
+                          : 'Ready to order, or need something else?'}
                 </small>
               </div>
             </div>
             <button
               className="button primary"
-              disabled={busy || active}
+              disabled={busy || active || (!!data.table?.is_shared && !guestKey)}
               onClick={() => void callWaiter()}
             >
               {busy ? 'Sending…' : active ? 'Called' : 'Call waiter'}

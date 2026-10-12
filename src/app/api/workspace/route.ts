@@ -14,7 +14,9 @@ export const GET = handler(async (request) => {
   if (!restaurant) throw new ApiError(404, 'Restaurant not found.');
   const [tables, menu, staff] = await db.batch([
     db
-      .prepare('SELECT * FROM dining_tables WHERE restaurant_id=? ORDER BY created_at,label')
+      .prepare(
+        'SELECT * FROM dining_tables WHERE restaurant_id=? ORDER BY is_shared,created_at,label',
+      )
       .bind(rid),
     db.prepare('SELECT * FROM menu_items WHERE restaurant_id=? ORDER BY sort_order,name').bind(rid),
     db

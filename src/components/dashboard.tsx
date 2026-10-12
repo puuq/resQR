@@ -29,6 +29,7 @@ import { RestaurantForm } from './restaurant-form';
 import { MenuEditor, StaffEditor, TableEditor } from './workspace-editors';
 import { ServiceQueue } from './service-queue';
 import { InquiryInbox } from './inquiry-inbox';
+import { DeleteRestaurant } from './delete-restaurant';
 
 type Tab = 'calls' | 'menu' | 'tables' | 'team' | 'settings';
 export function Dashboard({ user }: { user: User }) {
@@ -358,7 +359,7 @@ export function Dashboard({ user }: { user: User }) {
                           <div className="restaurant-card-meta">
                             <span>
                               <QrCode size={15} />
-                              {r.table_count} tables
+                              {r.table_count ? `${r.table_count} tables + shared QR` : 'Shared QR'}
                             </span>
                             <span>
                               <UtensilsCrossed size={15} />
@@ -439,6 +440,17 @@ export function Dashboard({ user }: { user: User }) {
                       await loadList();
                     }}
                   />
+                  {user.role === 'platform' && (
+                    <DeleteRestaurant
+                      restaurant={workspace.restaurant}
+                      onDeleted={async () => {
+                        setSelected(null);
+                        setWorkspace(null);
+                        setTab('calls');
+                        await loadList();
+                      }}
+                    />
+                  )}
                 </section>
               )}
             </>

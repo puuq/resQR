@@ -53,7 +53,7 @@ export function RestaurantForm({
           theme,
           logo,
           ad_image: adImage,
-          table_count: Number(f.get('table_count') || 6),
+          table_count: Number(f.get('table_count') || 0),
           sample_menu: !initial && !importedMenu.length && sampleMenu,
           ...(!initial
             ? {
@@ -135,8 +135,19 @@ export function RestaurantForm({
       {!initial && (
         <div className="form-grid">
           <label>
-            Number of tables
-            <input name="table_count" type="number" required min={1} max={100} defaultValue={6} />
+            Number of tables (optional)
+            <input
+              name="table_count"
+              aria-label="Number of tables (optional)"
+              aria-describedby="table-count-help"
+              type="number"
+              min={0}
+              max={100}
+              placeholder="Leave blank for shared QR only"
+            />
+            <small id="table-count-help">
+              A shared QR is always included. Enter a number to add individual table QRs.
+            </small>
           </label>
           <label className="check-label">
             <input
@@ -194,32 +205,6 @@ export function RestaurantForm({
         </div>
         <span className="button primary">Call waiter</span>
       </div>
-      <div className="form-divider">
-        <span>WI-FI CARD · OPTIONAL</span>
-      </div>
-      <div className="form-grid">
-        <label>
-          Wi-Fi name
-          <input
-            name="wifi_ssid"
-            maxLength={32}
-            defaultValue={initial?.wifi_ssid}
-            placeholder="Guest network"
-          />
-        </label>
-        <label>
-          Wi-Fi password
-          <input
-            name="wifi_password"
-            type="password"
-            maxLength={63}
-            defaultValue={initial?.wifi_password}
-            autoComplete="off"
-            placeholder="Leave empty for an open network"
-          />
-        </label>
-      </div>
-      <small>Use a guest network. These details appear on your printable Wi-Fi QR cards.</small>
       <div className="form-divider">
         <span>GOOGLE REVIEWS · OPTIONAL</span>
       </div>

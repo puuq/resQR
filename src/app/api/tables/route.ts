@@ -12,6 +12,19 @@ export const POST = handler(async (request) => {
     .parse(await body(request));
   access(user, raw.restaurant_id, true);
   const db = await database();
+  if (raw.label.startsWith('__shared_')) throw new ApiError(400, 'Choose another table label.');
+  if (raw.id) {
+    const table = await db
+      .prepare('SELECT is_shared FROM dining_tables WHERE id=? AND restaurant_id=?')
+      .bind(raw.id, raw.restaurant_id)
+      .first<{ is_shared: number }>();
+    if (!table) throw new ApiError(404, 'Table not found.');
+    if (table.is_shared)
+      throw new ApiError(
+        400,
+        'The shared QR is managed automatically. Add or rename an individual table instead.',
+      );
+  }
   if (
     await db
       .prepare('SELECT id FROM dining_tables WHERE restaurant_id=? AND label=? AND id!=?')
@@ -26,7 +39,7 @@ export const POST = handler(async (request) => {
       .run();
   else {
     const count = await db
-      .prepare('SELECT COUNT(*) AS n FROM dining_tables WHERE restaurant_id=?')
+      .prepare('SELECT COUNT(*) AS n FROM dining_tables WHERE restaurant_id=? AND is_shared=0')
       .bind(raw.restaurant_id)
       .first<{ n: number }>();
     if ((count?.n || 0) >= 100)

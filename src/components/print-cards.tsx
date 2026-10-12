@@ -83,8 +83,12 @@ export function PrintCards() {
                 <br />
                 start with a scan.
               </h2>
-              <img className="print-qr" src={codes[t.id]} alt={`Menu QR for ${t.label}`} />
-              <strong className="print-table">{t.label}</strong>
+              <img
+                className="print-qr"
+                src={codes[t.id]}
+                alt={`Menu QR for ${t.is_shared ? 'Shared QR' : t.label}`}
+              />
+              <strong className="print-table">{t.is_shared ? 'Shared QR' : t.label}</strong>
               <p>Explore the menu · Call your waiter</p>
               <small>No app. Just your camera.</small>
               <span className="print-powered">Powered by resQR</span>
@@ -125,7 +129,7 @@ export function PrintCards() {
                   </p>
                 </div>
               )}
-              <small>{t.label}</small>
+              <small>{t.is_shared ? 'Shared QR' : t.label}</small>
               <span className="print-powered">Powered by resQR</span>
             </div>
           </section>
