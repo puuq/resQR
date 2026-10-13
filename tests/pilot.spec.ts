@@ -44,12 +44,17 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
       name: 'The Corner Table',
       slug: `corner-${suffix}`,
       color: '#965d44',
+      menu_background: '#f5f0ff',
       table_count: 4,
       sample_menu: true,
     },
   });
   expect(second.status()).toBe(201);
   const other = (await second.json()).id;
+  expect(
+    (await (await admin.get(`/api/workspace?restaurant=${other}`)).json()).restaurant
+      .menu_background,
+  ).toBe('#f5f0ff');
   const w = await (await admin.get(`/api/workspace?restaurant=${rid}`)).json();
   expect(w.tables).toHaveLength(7);
   expect(w.tables.filter((table: { is_shared: number }) => !table.is_shared)).toHaveLength(6);
@@ -212,6 +217,16 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
     ).status(),
   ).toBe(403);
   // R2 upload and branding round-trip, including centrally managed sponsorship.
+  expect(w.restaurant.menu_background).toBe('');
+  for (const invalidBackground of ['#000000', '#123', 'url(javascript:alert(1))']) {
+    expect(
+      (
+        await admin.patch('/api/restaurants', {
+          data: { ...w.restaurant, id: rid, menu_background: invalidBackground },
+        })
+      ).status(),
+    ).toBe(400);
+  }
   const image = Buffer.from(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aRz8AAAAASUVORK5CYII=',
     'base64',
@@ -236,6 +251,7 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
           ad_url: 'https://example.com',
           theme: 'dark',
           color: '#563d74',
+          menu_background: '#fff4e8',
         },
       })
     ).status(),
@@ -245,9 +261,18 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
     logo: imageUrl,
     theme: 'dark',
     color: '#563d74',
+    menu_background: '#fff4e8',
     ad_title: 'Local sponsor',
     google_review_url: reviewUrl,
   });
+  const { menu_background: previousBackground, ...legacyRestaurant } = branded.restaurant;
+  expect(previousBackground).toBe('#fff4e8');
+  expect(
+    (await admin.patch('/api/restaurants', { data: { ...legacyRestaurant, id: rid } })).status(),
+  ).toBe(200);
+  expect(
+    (await (await admin.get(`/api/workspace?restaurant=${rid}`)).json()).restaurant.menu_background,
+  ).toBe('#fff4e8');
   // Owners can manage their review link, without modifying another venue or platform ads.
   const ownerCredentials = {
     email: `owner-${suffix}@resqr.local`,
@@ -273,6 +298,24 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   const ownerPage = await ownerContext.newPage();
   await ownerPage.goto('/dashboard');
   await ownerPage.getByRole('button', { name: 'Brand & settings' }).click();
+  const backgroundPicker = ownerPage.getByLabel('Menu background colour', { exact: true });
+  await expect(backgroundPicker).toHaveValue('#fff4e8');
+  const chooseBackground = async (value: string) => {
+    await backgroundPicker.evaluate((element, colour) => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(
+        element,
+        colour,
+      );
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+    }, value);
+  };
+  await chooseBackground('#000000');
+  await expect(
+    ownerPage.getByText('Choose a paler colour so the menu text stays readable.'),
+  ).toBeVisible();
+  await expect(ownerPage.getByRole('button', { name: 'Save changes', exact: true })).toBeDisabled();
+  await chooseBackground('#eef6ff');
   const ownerReviewUrl = 'https://search.google.com/local/writereview?placeid=ChIJTestRestaurant';
   await ownerPage.getByLabel('Google review link', { exact: true }).fill(ownerReviewUrl);
   await ownerPage.getByRole('button', { name: 'Save changes', exact: true }).click();
@@ -289,14 +332,14 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
     google_review_url: ownerReviewUrl,
     ad_title: 'Local sponsor',
     ad_image: imageUrl,
+    menu_background: '#eef6ff',
   });
-  await ownerContext.close();
-  await owner.dispose();
   // Sponsor settings remain saved while customer promotions/ads are temporarily disabled.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/t/${w.tables[0].token}`);
   const menuHeading = page.getByRole('heading', { name: 'Menu', exact: true, level: 1 });
   await expect(menuHeading).toBeVisible();
+  await expect(page.locator('.customer-page')).toHaveCSS('background-color', 'rgb(28, 40, 34)');
   const reviewLink = page.getByRole('link', {
     name: 'Review Juniper Coffee House on Google (opens in a new tab)',
   });
@@ -356,6 +399,33 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
       })
     ).status(),
   ).toBe(200);
+  await page.goto(`/t/${w.tables[0].token}`);
+  await expect(page.locator('.customer-page')).toHaveCSS('background-color', 'rgb(238, 242, 240)');
+  await expect(page.locator('.call-dock')).toHaveCSS('background-color', 'rgb(238, 242, 240)');
+  await ownerPage.reload();
+  await ownerPage.getByRole('button', { name: 'Brand & settings' }).click();
+  await chooseBackground('#fff4e8');
+  await ownerPage.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(ownerPage.getByText('Saved', { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.locator('.customer-page')).toHaveCSS('background-color', 'rgb(255, 244, 232)');
+  await expect(page.locator('.call-dock')).toHaveCSS('background-color', 'rgb(255, 244, 232)');
+  await page.screenshot({ path: '.local/customer-background-custom.png' });
+  await ownerPage.getByRole('button', { name: 'Use theme tint', exact: true }).click();
+  const backgroundReset = ownerPage.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/restaurants') && response.request().method() === 'PATCH',
+  );
+  await ownerPage.getByRole('button', { name: 'Save changes', exact: true }).click();
+  expect((await backgroundReset).status()).toBe(200);
+  expect(
+    (await (await admin.get(`/api/workspace?restaurant=${rid}`)).json()).restaurant.menu_background,
+  ).toBe('');
+  await page.reload();
+  await expect(page.locator('.customer-page')).toHaveCSS('background-color', 'rgb(238, 242, 240)');
+  await page.screenshot({ path: '.local/customer-background-auto.png' });
+  await ownerContext.close();
+  await owner.dispose();
   const spoof = await guest.post('/api/calls', {
     headers: { Origin: 'https://evil.example' },
     data: { token: w.tables[0].token },

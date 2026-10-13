@@ -13,6 +13,7 @@ export interface Restaurant {
   tagline: string;
   address: string;
   color: string;
+  menu_background: string;
   theme: 'light' | 'dark';
   logo: string;
   wifi_ssid: string;

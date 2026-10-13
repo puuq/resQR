@@ -11,7 +11,7 @@ import {
   Star,
   UtensilsCrossed,
 } from 'lucide-react';
-import { api, brandStyle, money, sharedGuestKey } from '@/lib/client';
+import { api, menuStyle, money, sharedGuestKey } from '@/lib/client';
 import type { PublicMenu, ServiceRequest } from '@/lib/types';
 import { ErrorBox, Loading } from './ui';
 import { MenuAdvertisement, MenuPromotions } from './menu-promotions';
@@ -135,7 +135,7 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
   return (
     <div
       className={`customer-page ${r.theme === 'dark' ? 'dark' : ''}`}
-      style={brandStyle(r.color)}
+      style={menuStyle(r.color, r.menu_background)}
     >
       <main
         className="customer-scroll"

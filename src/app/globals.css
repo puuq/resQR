@@ -546,7 +546,7 @@ form > small {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--brand-soft);
+  background: var(--menu-background, var(--brand-soft));
   padding: 18px;
   border-radius: 12px;
   margin: 2px 0 24px;
@@ -581,6 +581,23 @@ form > small {
 .brand-preview.dark {
   background: #26372e;
   color: #e9efe4;
+}
+.menu-background-setting {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 14px;
+  margin: 8px 0 20px;
+}
+.menu-background-setting > label {
+  margin: 0;
+}
+.menu-background-setting > button {
+  align-self: end;
+  margin-bottom: 10px;
+}
+.menu-background-setting > small,
+.menu-background-setting > .error-box {
+  grid-column: 1 / -1;
 }
 .success-note {
   display: flex;
@@ -1771,7 +1788,8 @@ form > small {
 /* Customer menu */
 .customer-page {
   --surface: #fff;
-  --bg: #faf9f5;
+  --bg: var(--menu-background, #faf9f5);
+  --line: var(--menu-line, #e8ece5);
   background: var(--bg);
   height: 100vh;
   height: 100dvh;
@@ -2046,18 +2064,26 @@ form > small {
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--ink);
+  padding-bottom: 5px;
+}
+.customer-category-heading::after {
+  content: '';
+  order: 1;
+  flex: 1;
+  align-self: center;
+  height: 1px;
+  background: var(--line);
 }
 .customer-category-title {
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.4px;
   line-height: 1.4;
 }
 .customer-category-count {
+  order: 2;
   flex-shrink: 0;
   color: var(--muted);
   font-size: 11px;
@@ -2075,7 +2101,7 @@ form > small {
   gap: 10px;
   min-width: 0;
   border-bottom: 1px solid var(--line);
-  padding: 13px 0;
+  padding: 12px 0;
 }
 .customer-item:last-child {
   border-bottom: 0;
@@ -2200,7 +2226,7 @@ form > small {
 }
 .call-dock {
   flex-shrink: 0;
-  background: var(--surface);
+  background: var(--bg);
   border-top: 1px solid var(--line);
   box-shadow: 0 -8px 28px #19291906;
   z-index: 15;
@@ -2914,7 +2940,7 @@ form > small {
   font-size: 11px;
 }
 .customer-page:not(.dark) {
-  --muted: #6b7868;
+  --muted: #586454;
 }
 .customer-page .eyebrow {
   font-size: 9px;

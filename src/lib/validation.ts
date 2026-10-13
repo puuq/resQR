@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isLightMenuBackground } from './menu-appearance';
 const image = z
   .string()
   .max(250)
@@ -59,6 +60,15 @@ export const restaurantInput = z.object({
     .regex(/^#[a-fA-F0-9]{6}$/)
     .default('#285847'),
   theme: z.enum(['light', 'dark']).default('light'),
+  menu_background: z
+    .string()
+    .trim()
+    .max(7)
+    .refine(
+      (value) => value === '' || isLightMenuBackground(value),
+      'Choose a light background colour, or use the automatic theme tint.',
+    )
+    .default(''),
   logo: image.default(''),
   wifi_ssid: z.string().max(32).default(''),
   wifi_password: z.string().max(63).default(''),

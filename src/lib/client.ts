@@ -1,3 +1,4 @@
+import { menuPalette } from './menu-appearance';
 export async function api<T>(url: string, options: RequestInit = {}): Promise<T> {
   let response: Response;
   try {
@@ -54,5 +55,13 @@ export function brandStyle(color: string) {
     '--brand': color,
     '--brand-button': button,
     '--brand-soft': `${color}16`,
+  } as React.CSSProperties;
+}
+export function menuStyle(color: string, background = '') {
+  const palette = menuPalette(color, background);
+  return {
+    ...brandStyle(color),
+    '--menu-background': palette.background,
+    '--menu-line': palette.line,
   } as React.CSSProperties;
 }

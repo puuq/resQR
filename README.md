@@ -109,6 +109,8 @@ Admin and owners can set an optional **Google review link** in restaurant settin
 
 The customer menu groups dishes under one heading per category and uses compact rows with the price beside the dish name. Descriptions, vegetarian labels, photos and sold-out status remain visible. Search and category filters show only matching groups while preserving the restaurant's item order within each category.
 
+In restaurant creation or **Brand & settings**, an optional **Menu background colour** applies across the light customer page and waiter bar. Leave it automatic (or choose **Use theme tint**) for a pale shade derived from the brand colour. The form previews the background and rejects dark colours to keep text readable. Dark appearance keeps its dark palette. Migration `0005_menu_background.sql` preserves existing restaurants with automatic backgrounds; older update requests that omit the field retain a saved custom colour.
+
 ## Pilot limits and next steps
 
 - Keep the staff queue open, the device awake and sound enabled. Background/locked-phone notifications and native apps are not implemented. Internet is required; a failed POST never displays a successful send.

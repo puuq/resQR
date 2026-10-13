@@ -2,7 +2,8 @@
 import { useState, type FormEvent } from 'react';
 import { ArrowRight, Check, Coffee } from 'lucide-react';
 import type { Restaurant } from '@/lib/types';
-import { api, brandStyle } from '@/lib/client';
+import { api, menuStyle } from '@/lib/client';
+import { isLightMenuBackground, menuPalette } from '@/lib/menu-appearance';
 import { ErrorBox, ImageUpload } from './ui';
 import { MenuImporter } from './menu-importer';
 import type { ImportedDish } from '@/lib/menu-import';
@@ -19,6 +20,12 @@ export function RestaurantForm({
   const [slug, setSlug] = useState(initial?.slug || '');
   const [color, setColor] = useState(initial?.color || '#285847');
   const [theme, setTheme] = useState(initial?.theme || 'light');
+  const [background, setBackground] = useState(initial?.menu_background || '');
+  const backgroundError =
+    background && !isLightMenuBackground(background)
+      ? 'Choose a paler colour so the menu text stays readable.'
+      : '';
+  const backgroundColour = menuPalette(color, background).background;
   const [logo, setLogo] = useState(initial?.logo || '');
   const [adImage, setAdImage] = useState(initial?.ad_image || '');
   const [busy, setBusy] = useState(false);
@@ -30,7 +37,7 @@ export function RestaurantForm({
   const [sampleMenu, setSampleMenu] = useState(true);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (importBusy) return;
+    if (importBusy || backgroundError) return;
     if (!initial && importedMenu.length && !menuReviewed) {
       setError(
         'Review the imported dishes and confirm their prices before creating the restaurant.',
@@ -51,6 +58,7 @@ export function RestaurantForm({
           slug,
           color,
           theme,
+          menu_background: background,
           logo,
           ad_image: adImage,
           table_count: Number(f.get('table_count') || 0),
@@ -195,7 +203,37 @@ export function RestaurantForm({
           </select>
         </label>
       </div>
-      <div className={`brand-preview ${theme === 'dark' ? 'dark' : ''}`} style={brandStyle(color)}>
+      <div className="menu-background-setting">
+        <label>
+          Menu background colour
+          <div className="color-input">
+            <input
+              type="color"
+              aria-label="Menu background colour"
+              value={background || backgroundColour}
+              onChange={(event) => setBackground(event.target.value)}
+            />
+            <span>{(background || backgroundColour).toUpperCase()}</span>
+          </div>
+        </label>
+        <button
+          type="button"
+          className="text-button"
+          disabled={!background}
+          onClick={() => setBackground('')}
+        >
+          Use theme tint
+        </button>
+        <small>
+          {background ? 'Custom colour.' : 'Automatic: a pale shade of your brand colour.'} Applies
+          to the whole light menu page. Dark appearance keeps its dark background.
+        </small>
+        <ErrorBox message={backgroundError} />
+      </div>
+      <div
+        className={`brand-preview ${theme === 'dark' ? 'dark' : ''}`}
+        style={menuStyle(color, background)}
+      >
         <span className="preview-logo">
           {logo ? <img src={logo} alt="" /> : <Coffee size={24} />}
         </span>
@@ -255,7 +293,7 @@ export function RestaurantForm({
             Saved
           </span>
         )}
-        <button className="button primary" disabled={busy || importBusy}>
+        <button className="button primary" disabled={busy || importBusy || !!backgroundError}>
           {busy ? 'Saving…' : initial ? 'Save changes' : 'Create restaurant'}
           {!initial && <ArrowRight size={16} />}
         </button>
