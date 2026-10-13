@@ -169,16 +169,31 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
       >
         <div className="customer-container">
           <header className="customer-top">
-            <a href={`/r/${r.slug}`} className="customer-name">
-              {r.logo ? (
-                <img src={r.logo} alt={`${r.name} logo`} />
-              ) : (
-                <span className="customer-logo">
-                  <Coffee size={20} />
-                </span>
+            <div className="customer-identity">
+              <a href={`/r/${r.slug}`} className="customer-name">
+                {r.logo ? (
+                  <img src={r.logo} alt={`${r.name} logo`} />
+                ) : (
+                  <span className="customer-logo">
+                    <Coffee size={20} />
+                  </span>
+                )}
+                <h1>{r.name}</h1>
+              </a>
+              {r.google_review_url && (
+                <a
+                  className="google-review-link"
+                  href={r.google_review_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Review ${r.name} on Google (opens in a new tab)`}
+                >
+                  <Star size={12} aria-hidden="true" />
+                  Google review
+                  <ArrowUpRight size={12} aria-hidden="true" />
+                </a>
               )}
-              <h1>{r.name}</h1>
-            </a>
+            </div>
             {data.table && (
               <span className="table-chip">
                 <span className="status-dot" />
@@ -187,21 +202,6 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
             )}
           </header>
           <section className="customer-menu-section">
-            {r.google_review_url && (
-              <div className="customer-section-title">
-                <a
-                  className="google-review-link"
-                  href={r.google_review_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Review ${r.name} on Google (opens in a new tab)`}
-                >
-                  <Star size={14} aria-hidden="true" />
-                  Review on Google
-                  <ArrowUpRight size={13} aria-hidden="true" />
-                </a>
-              </div>
-            )}
             {SHOW_MENU_SPONSORS && <MenuPromotions />}
             <label className="search-field customer-search">
               <Search size={18} />

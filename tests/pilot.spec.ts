@@ -350,6 +350,11 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await expect(reviewLink).toHaveAttribute('href', ownerReviewUrl);
   await expect(reviewLink).toHaveAttribute('target', '_blank');
   await expect(reviewLink).toHaveAttribute('rel', 'noopener noreferrer');
+  await expect(
+    page
+      .locator('.customer-top')
+      .getByRole('link', { name: 'Review Juniper Coffee House on Google (opens in a new tab)' }),
+  ).toBeVisible();
   await page.context().route(ownerReviewUrl, (route) =>
     route.fulfill({
       contentType: 'text/html',

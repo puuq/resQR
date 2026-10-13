@@ -1858,6 +1858,11 @@ form > small {
   gap: 12px;
   padding: 14px 0;
   border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+.customer-identity {
+  flex: 1;
+  min-width: 0;
 }
 .customer-name {
   display: flex;
@@ -1874,6 +1879,7 @@ form > small {
   overflow-wrap: anywhere;
   font: inherit;
   font-weight: 700;
+  letter-spacing: inherit;
   margin: 0;
 }
 .customer-name > img,
@@ -1891,6 +1897,7 @@ form > small {
 }
 .table-chip {
   flex-shrink: 0;
+  align-self: flex-start;
   border: 1px solid var(--line);
   background: var(--surface);
   border-radius: 25px;
@@ -1989,31 +1996,21 @@ form > small {
   flex-shrink: 0;
   margin-top: 0;
 }
-.customer-section-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 18px 0;
-  gap: 12px;
-}
 .google-review-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 8px 10px;
-  border: 1px solid var(--brand-soft);
-  border-radius: 9px;
+  gap: 4px;
+  min-height: 24px;
+  margin: 2px 0 0 36px;
   color: var(--brand-button);
-  background: var(--surface);
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
 }
 .google-review-link:hover {
-  background: var(--brand-soft);
+  text-decoration: underline;
 }
 .google-review-link:focus-visible {
   outline: 2px solid var(--brand-button);
@@ -2021,7 +2018,6 @@ form > small {
 }
 .dark .google-review-link {
   color: var(--ink);
-  border-color: var(--line);
 }
 .dark .google-review-link:focus-visible {
   outline-color: var(--ink);
