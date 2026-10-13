@@ -1855,23 +1855,31 @@ form > small {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 15px;
-  padding: 26px 0;
+  gap: 12px;
+  padding: 14px 0;
   border-bottom: 1px solid var(--line);
 }
 .customer-name {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
   font-family: 'Manrope', sans-serif;
   font-size: 17px;
   letter-spacing: -0.5px;
 }
+.customer-name strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .customer-name > img,
 .customer-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1879,6 +1887,7 @@ form > small {
   color: var(--brand-button);
 }
 .table-chip {
+  flex-shrink: 0;
   border: 1px solid var(--line);
   background: var(--surface);
   border-radius: 25px;
@@ -2874,9 +2883,6 @@ form > small {
   .customer-category-items {
     grid-template-columns: 1fr;
   }
-  .customer-top {
-    padding: 22px 0;
-  }
   .print-toolbar {
     flex-wrap: wrap;
   }
@@ -3082,11 +3088,6 @@ form > small {
   .customer-name {
     font-size: 14px;
     gap: 8px;
-  }
-  .customer-name > img,
-  .customer-logo {
-    width: 34px;
-    height: 34px;
   }
   .table-chip {
     font-size: 9px;

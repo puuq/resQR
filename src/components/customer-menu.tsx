@@ -174,7 +174,7 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                 <img src={r.logo} alt={`${r.name} logo`} />
               ) : (
                 <span className="customer-logo">
-                  <Coffee size={23} />
+                  <Coffee size={20} />
                 </span>
               )}
               <strong>{r.name}</strong>
