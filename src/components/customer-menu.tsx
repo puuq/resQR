@@ -169,15 +169,17 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
       >
         <div className="customer-container">
           <header className="customer-top">
-            <div className="customer-identity">
-              <a href={`/r/${r.slug}`} className="customer-name">
+            <div className={`customer-identity ${r.google_review_url ? 'has-review' : ''}`}>
+              <a href={`/r/${r.slug}`} className="customer-brandmark" aria-label={`${r.name} menu`}>
                 {r.logo ? (
-                  <img src={r.logo} alt={`${r.name} logo`} />
+                  <img src={r.logo} alt="" />
                 ) : (
                   <span className="customer-logo">
                     <Coffee size={20} />
                   </span>
                 )}
+              </a>
+              <a href={`/r/${r.slug}`} className="customer-name">
                 <h1>{r.name}</h1>
               </a>
               {r.google_review_url && (

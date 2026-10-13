@@ -1861,10 +1861,28 @@ form > small {
   margin-bottom: 14px;
 }
 .customer-identity {
+  --header-logo-size: 28px;
+  display: grid;
+  grid-template-columns: var(--header-logo-size) minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 2px;
   flex: 1;
   min-width: 0;
 }
+.customer-identity.has-review {
+  --header-logo-size: 44px;
+}
+.customer-brandmark {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+}
+.has-review .customer-brandmark {
+  grid-row: 1 / span 2;
+}
 .customer-name {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1882,10 +1900,10 @@ form > small {
   letter-spacing: inherit;
   margin: 0;
 }
-.customer-name > img,
+.customer-brandmark > img,
 .customer-logo {
-  width: 28px;
-  height: 28px;
+  width: var(--header-logo-size);
+  height: var(--header-logo-size);
   flex-shrink: 0;
   object-fit: contain;
   border-radius: 8px;
@@ -1997,12 +2015,15 @@ form > small {
   margin-top: 0;
 }
 .google-review-link {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
   min-height: 24px;
-  margin: 2px 0 0 36px;
+  margin: 0;
   color: var(--brand-button);
   font-size: 11px;
   font-weight: 600;
