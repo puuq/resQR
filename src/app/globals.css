@@ -1869,9 +1869,12 @@ form > small {
   font-size: 17px;
   letter-spacing: -0.5px;
 }
-.customer-name strong {
+.customer-name h1 {
   min-width: 0;
   overflow-wrap: anywhere;
+  font: inherit;
+  font-weight: 700;
+  margin: 0;
 }
 .customer-name > img,
 .customer-logo {
@@ -1992,19 +1995,6 @@ form > small {
   justify-content: space-between;
   margin: 18px 0;
   gap: 12px;
-}
-.customer-section-title h1 {
-  font-size: 20px;
-}
-.customer-menu-label {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-.customer-menu-label > span {
-  font-size: 10px;
-  color: var(--muted);
-  white-space: nowrap;
 }
 .google-review-link {
   display: inline-flex;
@@ -3092,9 +3082,6 @@ form > small {
   .table-chip {
     font-size: 9px;
     padding: 7px 10px;
-  }
-  .customer-section-title h1 {
-    font-size: 19px;
   }
   .customer-item h3 {
     font-size: 16px;

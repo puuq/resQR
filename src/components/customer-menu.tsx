@@ -177,7 +177,7 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                   <Coffee size={20} />
                 </span>
               )}
-              <strong>{r.name}</strong>
+              <h1>{r.name}</h1>
             </a>
             {data.table && (
               <span className="table-chip">
@@ -187,12 +187,8 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
             )}
           </header>
           <section className="customer-menu-section">
-            <div className="customer-section-title">
-              <div className="customer-menu-label">
-                <h1>Menu</h1>
-                <span>{data.menu.length} items</span>
-              </div>
-              {r.google_review_url && (
+            {r.google_review_url && (
+              <div className="customer-section-title">
                 <a
                   className="google-review-link"
                   href={r.google_review_url}
@@ -204,8 +200,8 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                   Review on Google
                   <ArrowUpRight size={13} aria-hidden="true" />
                 </a>
-              )}
-            </div>
+              </div>
+            )}
             {SHOW_MENU_SPONSORS && <MenuPromotions />}
             <label className="search-field customer-search">
               <Search size={18} />

@@ -337,7 +337,11 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   // Sponsor settings remain saved while customer promotions/ads are temporarily disabled.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/t/${w.tables[0].token}`);
-  const menuHeading = page.getByRole('heading', { name: 'Menu', exact: true, level: 1 });
+  const menuHeading = page.getByRole('heading', {
+    name: 'Juniper Coffee House',
+    exact: true,
+    level: 1,
+  });
   await expect(menuHeading).toBeVisible();
   await expect(page.locator('.customer-page')).toHaveCSS('background-color', 'rgb(28, 40, 34)');
   const reviewLink = page.getByRole('link', {
@@ -485,7 +489,9 @@ test('restaurant onboarding, tenant boundaries and the complete table-call lifec
   await expect(staffPage.getByRole('button', { name: 'Sound on' })).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/t/${w.tables[1].token}`);
-  await expect(page.getByRole('heading', { name: 'Menu', exact: true, level: 1 })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Juniper Coffee House', exact: true, level: 1 }),
+  ).toBeVisible();
   await expect(reviewLink).toHaveCount(0);
   const emptyAd = page.getByRole('complementary', { name: 'Advertisement', exact: true });
   await expect(emptyAd).toHaveCount(0);
