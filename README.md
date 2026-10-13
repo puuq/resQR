@@ -15,6 +15,8 @@ The setup form validates contact details, preserves inputs on failure and confir
 
 Customer menus temporarily hide the resQR/Splitr promotion strip and advertisement area until the apps and sponsor content are ready. No blank space is reserved above the waiter bar. Their layouts and saved sponsor settings are retained; `SHOW_MENU_SPONSORS` in `CustomerMenu` can restore both areas for a future launch.
 
+Owners and administrators can use **Your menu → Edit highlights** to configure two optional sections above the regular categories. Each supports a custom title, a short message, up to 12 existing dishes in selection order, and a visibility switch. Customer category chips include enabled highlights; search filters them too. Dish prices and availability come from the regular menu, so edits stay in sync; offer messages do not automatically apply discounts. Disable a section when an offer ends. Empty sections are hidden. Migration `0006_menu_showcases.sql` adds tenant-scoped sections and memberships; deleting a dish removes its memberships, and restaurant deletion cascades through both new tables. Existing restaurants start with no highlights.
+
 ## Develop locally
 
 Node 22 is recommended.

@@ -15,6 +15,7 @@ import { api, menuStyle, money, sharedGuestKey } from '@/lib/client';
 import type { PublicMenu, ServiceRequest } from '@/lib/types';
 import { ErrorBox, Loading } from './ui';
 import { MenuAdvertisement, MenuPromotions } from './menu-promotions';
+import { CustomerShowcases } from './customer-showcases';
 // Temporarily disabled until the apps and sponsor content are ready. Keep both layouts for later.
 const SHOW_MENU_SPONSORS = false;
 export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?: string }) {
@@ -119,11 +120,31 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
     );
   if (!data) return <Loading />;
   const r = data.restaurant;
-  const categories = ['All', ...new Set(data.menu.map((i) => i.category))];
+  const showcases = (data.showcases || []).filter(
+    (section) =>
+      section.enabled && section.item_ids.some((id) => data.menu.some((item) => item.id === id)),
+  );
+  const categories = [
+    { value: 'All', label: 'All' },
+    ...showcases.map((section) => ({ value: `showcase:${section.slot}`, label: section.title })),
+    ...[...new Set(data.menu.map((i) => i.category))].map((name) => ({
+      value: `category:${name}`,
+      label: name,
+    })),
+  ];
+  const matchesSearch = (item: (typeof data.menu)[number]) =>
+    `${item.name} ${item.description}`.toLowerCase().includes(search.toLowerCase());
+  const visibleShowcases = showcases
+    .filter((section) => category === 'All' || category === `showcase:${section.slot}`)
+    .map((section) => ({
+      ...section,
+      item_ids: section.item_ids.filter((id) =>
+        data.menu.some((item) => item.id === id && matchesSearch(item)),
+      ),
+    }))
+    .filter((section) => section.item_ids.length);
   const items = data.menu.filter(
-    (i) =>
-      (category === 'All' || i.category === category) &&
-      `${i.name} ${i.description}`.toLowerCase().includes(search.toLowerCase()),
+    (i) => (category === 'All' || `category:${i.category}` === category) && matchesSearch(i),
   );
   const groups = new Map<string, typeof items>();
   for (const item of items) {
@@ -198,16 +219,19 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
             <nav className="category-tabs" aria-label="Menu categories">
               {categories.map((c) => (
                 <button
-                  className={category === c ? 'selected' : ''}
-                  key={c}
-                  aria-pressed={category === c}
-                  onClick={() => setCategory(c)}
+                  className={category === c.value ? 'selected' : ''}
+                  key={c.value}
+                  aria-pressed={category === c.value}
+                  onClick={() => setCategory(c.value)}
                 >
-                  {c}
+                  {c.label}
                 </button>
               ))}
             </nav>
-            {!items.length ? (
+            {!!visibleShowcases.length && (
+              <CustomerShowcases sections={visibleShowcases} menu={data.menu} />
+            )}
+            {!items.length && !visibleShowcases.length ? (
               <div className="empty-panel">
                 <UtensilsCrossed size={30} />
                 <h2>
@@ -219,7 +243,7 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                     : 'Our menu is being updated. Please ask your waiter.'}
                 </p>
               </div>
-            ) : (
+            ) : items.length ? (
               <div className="customer-items">
                 {[...groups].map(([name, categoryItems]) => (
                   <section
@@ -281,7 +305,7 @@ export function CustomerMenu({ tableToken, slug }: { tableToken?: string; slug?:
                   </section>
                 ))}
               </div>
-            )}
+            ) : null}
             <p className="menu-footnote">
               Please tell your waiter about any allergies or dietary requirements.
               <br />

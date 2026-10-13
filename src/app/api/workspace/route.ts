@@ -1,6 +1,7 @@
 import { access, ApiError, handler, json, requireUser } from '@/lib/api';
 import { database, environment } from '@/lib/db';
 import type { Restaurant } from '@/lib/types';
+import { readShowcases } from '@/lib/menu-showcases';
 export const dynamic = 'force-dynamic';
 export const GET = handler(async (request) => {
   const user = await requireUser();
@@ -30,6 +31,7 @@ export const GET = handler(async (request) => {
     restaurant,
     tables: tables.results,
     menu: menu.results,
+    showcases: await readShowcases(db, rid),
     staff: user.role === 'waiter' ? [] : staff.results,
     qrBaseUrl: env.QR_BASE_URL || new URL(request.url).origin,
   });

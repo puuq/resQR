@@ -1,6 +1,7 @@
 import { ApiError, handler, json } from '@/lib/api';
 import { database } from '@/lib/db';
 import type { DiningTable, Restaurant } from '@/lib/types';
+import { readShowcases } from '@/lib/menu-showcases';
 export const dynamic = 'force-dynamic';
 export const GET = handler(async (request) => {
   const params = new URL(request.url).searchParams;
@@ -36,5 +37,8 @@ export const GET = handler(async (request) => {
       ? { label: table.is_shared ? 'Guest menu' : table.label, is_shared: table.is_shared }
       : null,
     menu: menu.results,
+    showcases: (await readShowcases(db, restaurant.id)).filter(
+      (section) => section.enabled && section.item_ids.length,
+    ),
   });
 });

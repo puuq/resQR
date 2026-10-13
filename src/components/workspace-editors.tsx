@@ -17,6 +17,7 @@ import QRCode from 'qrcode';
 import type { MenuItem, Workspace } from '@/lib/types';
 import { api, money } from '@/lib/client';
 import { ErrorBox, ImageUpload, Modal } from './ui';
+import { MenuShowcaseEditor } from './menu-showcase-editor';
 type Props = { workspace: Workspace; refresh: () => Promise<void> };
 export function MenuEditor({ workspace, refresh }: Props) {
   const [editing, setEditing] = useState<MenuItem | 'new' | null>(null);
@@ -69,6 +70,7 @@ export function MenuEditor({ workspace, refresh }: Props) {
         </div>
       </div>
       <ErrorBox message={error} />
+      <MenuShowcaseEditor workspace={workspace} refresh={refresh} />
       {!filtered.length ? (
         <div className="empty-panel">
           <UtensilsCrossed size={35} />

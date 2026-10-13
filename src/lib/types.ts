@@ -44,6 +44,13 @@ export interface DiningTable {
   created_at: number;
   is_shared: number;
 }
+export interface MenuShowcase {
+  slot: 1 | 2;
+  title: string;
+  description: string;
+  enabled: boolean;
+  item_ids: string[];
+}
 export interface ServiceRequest {
   id: string;
   table_id: string;
@@ -66,6 +73,7 @@ export interface Workspace {
   restaurant: Restaurant;
   tables: DiningTable[];
   menu: MenuItem[];
+  showcases: MenuShowcase[];
   staff: User[];
   qrBaseUrl: string;
 }
@@ -74,4 +82,5 @@ export interface PublicMenu {
   restaurant: PublicRestaurant;
   table: { label: string; is_shared: number } | null;
   menu: MenuItem[];
+  showcases: MenuShowcase[];
 }
